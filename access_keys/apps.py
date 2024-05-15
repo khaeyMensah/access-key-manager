@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class KeyManagerConfig(AppConfig):
+class AccessKeysConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'key_manager'
+    name = 'access_keys'
