@@ -1,14 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-</head>
-<body>
-    <h2>Login</h2>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
-    </form>
-</body>
-</html>
+{% extends 'base_accounts.html' %}
+
+{% block title %}Log in to Django Boards{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-4 col-md-6 col-sm-8">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Log in</h3>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% include 'includes/form.html' %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn btn-light btn-block">Log in</button>
+          </form>
+        </div>
+        <div class="card-footer text-muted text-center">
+          Don't have a key yet? <a href="{% url "register" %}">Sign up</a>
+        </div>
+      </div>
+      <div class="text-center py-2">
+        <small>
+          <a href="#" class="text-muted">Forgot your password?</a>
+        </small>
+      </div>
+    </div>
+  </div>
+{% endblock %}

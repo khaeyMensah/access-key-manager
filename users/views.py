@@ -1,6 +1,8 @@
-from django.contrib.auth import login as auth_login
+from django.contrib.auth import login as auth_login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from users.forms import RegistrationForm
 
 # Create your views here.
@@ -26,3 +28,18 @@ def login(request):
         form = AuthenticationForm()
     return render(request, 'accounts/login.html', {'form': form})
 
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'users/password_reset_form.html'
+    email_template_name = 'users/password_reset_email.html'
+    success_url = reverse_lazy('password_reset_done')
+    
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'users/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+    
