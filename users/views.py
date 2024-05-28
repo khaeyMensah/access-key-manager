@@ -6,6 +6,9 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmVie
 from users.forms import RegistrationForm
 
 # Create your views here.
+def home(request):
+    return render(request, 'home.html')
+
 def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -34,12 +37,12 @@ def logout_view(request):
     return redirect('home')
 
 class CustomPasswordResetView(PasswordResetView):
-    template_name = 'users/password_reset_form.html'
-    email_template_name = 'users/password_reset_email.html'
+    template_name = 'authentication/password_reset.html'
+    email_template_name = 'authentication/password_reset_email.html'
     success_url = reverse_lazy('password_reset_done')
     
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
-    template_name = 'users/password_reset_confirm.html'
+    template_name = 'authentication/password_reset_confirm.html'
     success_url = reverse_lazy('password_reset_complete')
     

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}My Access Keys{% endblock %}
+
+{% block content %}
+    <h2>Your Access Keys</h2>
+    <ul>
+        {% for key in keys %}
+        <li>
+            Key: {{ key.key }} - Status: {{ key.status }} - Date of Procurement: {{ key.date_of_procurement }} - Expiry Date: {{ key.expiry_date }}
+            {% if key.status != 'revoked' %}
+            <form method="post" action="{% url 'revoke_key' key.id %}">
+                {% csrf_token %}
+                <button type="submit">Revoke</button>
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
