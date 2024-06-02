@@ -1,10 +1,10 @@
 from django.urls import path
 from access_keys import api_views, views
 
-app_name = 'access_keys'  # This sets the namespace for the app
+app_name = 'access_keys'
 
 urlpatterns = [
-    path('', views.access_keys, name='list'),
-    path('revoke/<int:key_id>/', views.revoke_key, name='revoke_key'),
-    path('verify_key/<str:school_email>/', api_views.verify_key, name='verify_key'),
+    path('api/status/<str:email>/', api_views.check_access_key_status_view, name='key_status'),
+    path('purchase-access-key/', views.purchase_access_key_view, name='purchase_access_key'),
+    path('revoke-access-key/<int:key_id>/', views.revoke_access_key_view, name='revoke_access_key'),
 ]

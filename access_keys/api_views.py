@@ -1,14 +1,24 @@
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .models import AccessKey
-from .serializers import AccessKeySerializer
+# views.py
+from django.http import JsonResponse
+from users.models import School
 
-@api_view(['GET'])
-def verify_key(request, school_email):
-    try:
-        access_key = AccessKey.objects.get(school__email=school_email, status='active')
-        serializer = AccessKeySerializer(access_key)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except AccessKey.DoesNotExist:
-        return Response({'error': 'Active key not found'}, status=status.HTTP_404_NOT_FOUND)
+def check_access_key_status_view(request):
+    if request.method == 'GET':
+        school_email = request.GET.get('school_email')
+        try:
+            school = School.objects.get(user__email=school_email)
+            active_key = school.access_keys.filter(status='active').first()
+            if active_key:
+                data = {
+                    'key': active_key.key,
+                    'status': active_key.status,
+                    'procurement_date': active_key.procurement_date,
+                    'expiry_date': active_key.expiry_date,
+                }
+                return JsonResponse(data, status=200)
+            else:
+                return JsonResponse({'error': 'No active access key found.'}, status=404)
+        except School.DoesNotExist:
+            return JsonResponse({'error': 'School not found.'}, status=404)
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=400)

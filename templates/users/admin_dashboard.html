@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+  <h1>Admin Dashboard</h1>
+  <p>Welcome, {{ request.user.get_full_name }}</p>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <h2>Access Keys</h2>
+  {% if access_keys %}
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>School</th>
+          <th>Status</th>
+          <th>Procurement Date</th>
+          <th>Expiry Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for access_key in access_keys %}
+          <tr class="access-key-{{ access_key.status }}">
+            <td>{{ access_key.key }}</td>
+            <td>{{ access_key.school.name }}</td>
+            <td>{{ access_key.get_status_display }}</td>
+            <td>{{ access_key.procurement_date }}</td>
+            <td>{{ access_key.expiry_date }}</td>
+            <td>
+              {% if access_key.status == 'active' %}
+                <a href="{% url 'access_keys:revoke_access_key' access_key.id %}" class="btn btn-danger">Revoke</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody> 
+    </table>
+  {% else %}
+    <p>No access keys found.</p>
+  {% endif %}
+
+  <h2>Audit Logs</h2>
+  <button id="toggle-log" class="btn btn-info">View Logs</button>
+  <div id="audit-log" style="display: none;">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Action</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in audit_logs %}
+          <tr>
+            <td>{{ log.user.get_full_name }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.timestamp }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+
+  <script src="{% static 'js/admin_dashboard.js' %}"></script>
+
+{% endblock %}

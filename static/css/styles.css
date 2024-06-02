@@ -1,3 +1,14 @@
-body {
-  background-color: blue;
+.table thead th {
+  background-color: #343a40; /* Dark background */
+  color: #fff; /* White text */
+}
+
+.table-hover tbody tr:hover {
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.table-hover tbody tr {
+  transition: all 0.3s ease;
 }

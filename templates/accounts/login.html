@@ -12,16 +12,18 @@
             {% csrf_token %}
             {% include 'includes/form.html' %}
             <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit" class="btn btn-light btn-block">Log in</button>
+            <div class="d-grid mt-3">
+              <button type="submit" class="btn btn-light btn-block">Log in</button>
+            </div>
           </form>
         </div>
         <div class="card-footer text-muted text-center">
-          Don't have a key yet? <a href="{% url "register" %}">Sign up</a>
+          Don't have an account yet? <a href="{% url "register" %}">Register</a>
         </div>
       </div>
       <div class="text-center py-2">
         <small>
-          <a href="#" class="text-muted">Forgot your password?</a>
+          <a href="{% url "password_reset" %}" class="text-muted">Forgot your password?</a>
         </small>
       </div>
     </div>

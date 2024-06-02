@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}School Dashboard{% endblock %}
+
+{% block content %}
+  <h1>School Dashboard</h1>
+  <p>Welcome, {{ request.user.get_full_name }} ({{ request.user.school.name }})</p>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <h2>Access Keys</h2>
+  {% if access_keys %}
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>Status</th>
+          <th>Procurement Date</th>
+          <th>Expiry Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for access_key in access_keys %}
+          <tr class="access-key-{{ access_key.status }}">
+            <td>{{ access_key.key }}</td>
+            <td>{{ access_key.get_status_display }}</td>
+            <td>{{ access_key.procurement_date }}</td>
+            <td>{{ access_key.expiry_date }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No access keys found.</p>
+  {% endif %}
+
+  {% if not active_access_key %}
+    <a href="{% url 'access_keys:purchase_access_key' %}" class="btn btn-primary">Purchase Access Key</a>
+  {% endif %}
+
+  <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+{% endblock %}
