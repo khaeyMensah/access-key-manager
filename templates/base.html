@@ -25,7 +25,7 @@
                                 {{ user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                {% if not user.school %}
+                                {% if not user.school and user.is_school_personnel %}
                                     <li><a class="dropdown-item" href="{% url 'complete_profile' %}">Complete Profile</a></li>
                                 {% else %}
                                     <li><a class="dropdown-item" href="{% url 'profile' %}">My Profile</a></li>

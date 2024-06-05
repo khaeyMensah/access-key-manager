@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-body">
                     <h3 class="card-title">Billing Information</h3>
-                    <form method="POST">
+                    <form method="POST" novalidate>
                         {% csrf_token %}
                         {{ form.as_p }}
                         {% comment %} {% include 'includes/form.html' %} {% endcomment %}

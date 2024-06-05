@@ -6,10 +6,10 @@
   {% if user.is_authenticated %}
     {% if user.is_admin %}
       <p>You are logged in as an admin.</p>
-      <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Admin Dashboard</a>
+      <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Dashboard</a>
     {% elif user.is_school_personnel %}
       <p>You are logged in as school personnel for {{ user.school.name }}.</p>
-      <a href="{% url 'school_dashboard' %}" class="btn btn-primary">School Dashboard</a>
+      <a href="{% url 'school_dashboard' %}" class="btn btn-primary">Dashboard</a>
     {% endif %}
     <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
   {% else %}

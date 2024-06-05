@@ -79,6 +79,7 @@ def revoke_access_key_view(request, key_id):
         access_key.status = 'revoked'
         access_key.revoked_by = request.user
         access_key.revoked_on = timezone.now()
+        access_key.save()
 
         KeyLog.objects.create(
             access_key = access_key,

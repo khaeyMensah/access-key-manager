@@ -21,6 +21,21 @@ class LoginForm(AuthenticationForm):
     class Meta:
         model = User
         
+
+class UserCompleteForm(forms.ModelForm):
+    email = forms.EmailField()
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'school']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        if not email:
+            raise forms.ValidationError('Please provide an email address.')
+        return cleaned_data
+        
         
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -30,6 +45,8 @@ class ProfileUpdateForm(forms.ModelForm):
         
 class BillingInformationForm(forms.ModelForm):
     email = forms.EmailField()
+    card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
     class Meta:
         model = BillingInformation
         fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
@@ -48,15 +65,15 @@ class BillingInformationForm(forms.ModelForm):
         
         if payment_method == "Card":
             if not card_number:
-                raise forms.ValidationError('Card number is required.')
+                self.add_error('card_number', 'Card number is required.')
             if not card_expiry:
-                raise forms.ValidationError('Card expiry date is required.')
+                self.add_error('card_expiry', 'Card expiry date is required.')
             if not card_cvv:
-                raise forms.ValidationError('Card CVV is required.')
+                self.add_error('card_cvv', 'Card CVV is required.')
 
         elif payment_method == "MTN":
             if not mobile_money_number:
-                raise forms.ValidationError('MOMO number is required.')
+                self.add_error('mobile_money_number', 'MOMO number is required.')
 
         return cleaned_data
         

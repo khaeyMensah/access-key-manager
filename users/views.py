@@ -1,14 +1,10 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, logout
-from django.urls import reverse_lazy
 from access_keys.models import AccessKey, KeyLog, School
 from django.contrib import messages
-from users.models import BillingInformation, User
-from django.utils.decorators import method_decorator
-from django.views.generic import UpdateView
-from django.core.exceptions import ObjectDoesNotExist
-from users.forms import AdminRegistrationForm, BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm
+from users.models import BillingInformation
+from users.forms import AdminRegistrationForm, BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, UserCompleteForm
 
 
 # Create your views here.
@@ -20,24 +16,22 @@ def home(request):
 @user_passes_test(lambda u: u.is_school_personnel)
 def school_dashboard_view(request):
     if not request.user.is_school_personnel:
-        return redirect('access_denied')    
-    # try:
-        # if not request.user.school:
-        #     messages.error(request, 'Please complete your profile by adding a school.')
-        #     return redirect('complete_profile')
+        return redirect('access_denied')
     
-    school = get_object_or_404(School, users=request.user)
-    # access_keys = school.access_Keys.objects.order_by('-date_of_procurement')
-    access_keys = school.access_keys.all()
+    try:
+        school = request.user.school
+    except School.DoesNotExist:
+        messages.error(request, 'No school associated with your account.')
+        return redirect('complete_profile')
+
+    access_keys = school.access_keys.order_by('-procurement_date')
     
     context = {
         'school': school,
         'access_keys': access_keys,
     }
     return render(request, 'users/school_dashboard.html', context)
-# except School.DoesNotExist:
-    # messages.error(request, 'No School associated with your account.')
-    # return redirect('home')
+
         
         
 @login_required
@@ -47,7 +41,7 @@ def admin_dashboard_view(request):
         return redirect('access_denied')
 
     # access_keys = school.access_keys.all()
-    access_keys = AccessKey.objects.order_by('procurement_date')
+    access_keys = AccessKey.objects.order_by('-procurement_date')
     key_logs = KeyLog.objects.order_by('-timestamp')
     
     context = {
@@ -130,38 +124,41 @@ def profile_view(request):
 @login_required
 def billing_information_view(request):
     user = request.user
-    billing_info = None
-    
-    billing_info = BillingInformation.objects.get(user=user)
-
+    try:
+        billing_info = BillingInformation.objects.get(user=user)
+    except BillingInformation.DoesNotExist:
+        return redirect('confirm_billing_info') 
     context = {
         'billing_info': billing_info,
     }
     return render(request, 'accounts/billing_information.html', context)
 
 
-@method_decorator(login_required, name='dispatch')
-class ProfileCompleteView(UpdateView):
-    model = User
-    fields = ('first_name', 'last_name', 'email', 'school')
-    template_name = 'accounts/complete_profile.html'
-    success_url = reverse_lazy('home')
-
-    def get_object(self):
-        return self.request.user
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        if not self.request.user.school:
-            form.fields['school'] = self.model._meta.get_field('school').formfield()
-        return form
-
-    def form_valid(self, form):
-        if not self.request.user.school:
-            form.instance.school = form.cleaned_data.get('school')
-        return super().form_valid(form)
-
+@login_required
+def profile_complete_view(request):
+    user = request.user
     
+    if request.method == 'POST':
+        form = UserCompleteForm(request.POST, instance=user)
+        if form.is_valid():
+            if not user.is_admin and not user.school:
+                user.school = form.cleaned_data.get('school')
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('home')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = UserCompleteForm(instance=user)
+        if user.is_admin or user.school:
+            form.fields.pop('school', None)
+
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/complete_profile.html', context)
+
+
 @login_required
 def confirm_billing_information_view(request):
     try:
@@ -179,6 +176,8 @@ def confirm_billing_information_view(request):
             return redirect('school_dashboard')
     else:
         form = BillingInformationForm(instance=billing_info)
+        form.fields['email'].initial = request.user.email
+        
 
     context = {
         'form': form,
@@ -209,48 +208,4 @@ def update_profile_view(request):
     }
     return render(request, 'accounts/update_profile.html', context)
 
-
-# def update_billing_view(request):
-#     if request.method == 'POST':
-#         billing_form = BillingInformationForm(request.POST, instance=request.user.billing_information)
-#         if billing_form.is_valid():
-#             billing_form.save()
-#             messages.success(request, 'Your billing information has been updated successfully.')
-#             return redirect('profile')
-#         else:
-#             messages.error(request, 'Please correct the errors below.')
-#     else:
-#         billing_form = BillingInformationForm(instance=request.user.billing_information)
-
-#     context = {
-#         'billing_form': billing_form,
-#     }
-#     return render(request, 'accounts/update_billing_info.html', context)
-
-
-
-# @login_required
-# def update_billing_info_view(request):
-#     try:
-#         billing_info = request.user.billing_information
-#     except ObjectDoesNotExist:
-#         billing_info = None
-
-#     if request.method == 'POST':
-#         form = BillingInformationForm(request.POST, instance=billing_info)
-#         if form.is_valid():
-#             billing_info = form.save(commit=False)
-#             billing_info.user = request.user
-#             billing_info.save()
-#             messages.success(request, 'Your billing information has been updated successfully.')
-#             return redirect('profile')
-#         else:
-#             messages.error(request, 'Please correct the errors below.')
-#     else:
-#         form = BillingInformationForm(instance=billing_info)
-
-#     context = {
-#         'billing_form': form,
-#     }
-#     return render(request, 'accounts/confirm_billing_info.html', context)
 
