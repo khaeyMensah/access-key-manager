@@ -1,18 +1,10 @@
 # from django import forms
 # from access_keys.models import AccessKey
 
-# class PurchaseAccessKeyForm(forms.ModelForm):
-#     class Meta:
-#         model = AccessKey
-#         fields = ['expiry_date', 'price']
-
-#     def clean(self):
-#         cleaned_data = super().clean()
-#         expiry_date = cleaned_data.get('expiry_date')
-#         price = cleaned_data.get('price')
-
-#         # Add validation logic for expiry_date and price
-#         # ...
-
-#         return cleaned_data
-    
+# class PurchaseAccessKeyForm(forms.Form):
+#     fixed_price_choices = [
+#         (30.00, '30 days ($30)'),
+#         (60.00, '60 days ($60)'),
+#         (90.00, '90 days ($90)'),
+#     ]
+#     fixed_price = forms.ChoiceField(choices=fixed_price_choices, widget=forms.RadioSelect)

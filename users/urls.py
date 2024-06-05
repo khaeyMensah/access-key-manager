@@ -1,18 +1,23 @@
 from django.urls import path
-from users import views as users_views, views
+from users import views as users_views
 from django.contrib.auth import views as auth_views
 
 
 urlpatterns = [
     path('', users_views.home, name='home'),
-    path('school-dashboard/', views.school_dashboard_view, name='school_dashboard'),
-    path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
+    path('school-dashboard/', users_views.school_dashboard_view, name='school_dashboard'),
+    path('admin-dashboard/', users_views.admin_dashboard_view, name='admin_dashboard'),
     path('register/', users_views.register_view, name='register'),
     path('admin-register/', users_views.admin_register_view, name='admin_register'),
     path('login/', users_views.login_view, name='login'),
     path('logout/', users_views.logout_view, name='logout'),
-    path('profile/', users_views.ProfileUpdateView.as_view(), name='complete_profile'),
+    
+    path('profile/', users_views.profile_view, name='profile'),
+    path('profile/complete/', users_views.ProfileCompleteView.as_view(), name='complete_profile'),
+    path('profile/update/', users_views.update_profile_view, name='update_profile'),
     path('profile/billing-info/', users_views.billing_information_view, name='billing_information'),
+    path('profile/billing-info/confirm/', users_views.confirm_billing_information_view, name='confirm_billing_info'),
+    path('profile/billing-info/update', users_views.update_billing_information_view, name='update_billing_info'),
 
     # Password Reset URLs
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='authentication/password_reset_form.html'), name='password_reset'),

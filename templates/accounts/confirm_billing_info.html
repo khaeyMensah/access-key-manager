@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Billing Information{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Billing Information</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {% include "includes/form.html" %}
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url "school_dashboard" %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

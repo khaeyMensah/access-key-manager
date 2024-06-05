@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Profile</h2>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>First Name:</strong> {{ user.first_name }}</p>
+    <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+    {% if user.school %}
+        <p><strong>School:</strong> {{ user.school.name }}</p>
+        <h3 class="mt-4">Active Access Key</h3>
+        {% if active_key %}
+            <p><strong>Key:</strong> {{ active_key.key }}</p>
+            <p><strong>Status:</strong> {{ active_key.status }}</p>
+            <p><strong>Procurement Date:</strong> {{ active_key.procurement_date }}</p>
+            <p><strong>Expiry Date:</strong> {{ active_key.expiry_date }}</p>
+        {% else %}
+            <p>No active access key found.</p>
+        {% endif %}
+    {% else %}
+        <p>No school associated with your profile. Please <a href="{% url 'complete_profile' %}">complete your profile</a>.</p>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'update_profile' %}" class="btn btn-primary">Update Profile</a>
+        <a href="{% url 'billing_information' %}" class="btn btn-info">View Billing Information</a>
+    </div>
+</div>
+{% endblock %}

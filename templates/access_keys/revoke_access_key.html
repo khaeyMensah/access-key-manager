@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Revoke Access Key</h2>
+  <p>Are you sure you want to revoke the following access key?</p>
+  <p>
+    <strong>Key:</strong> {{ access_key.key }} <br>
+    <strong>School:</strong> {{ access_key.school.name }} <br>
+    <strong>Status:</strong> {{ access_key.status }} <br>
+    <strong>Procurement Date:</strong> {{ access_key.procurement_date }} <br>
+    <strong>Expiry Date:</strong> {{ access_key.expiry_date }} <br>
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class='btn btn-danger'>Revoke</button>
+    <a href="{% url "admin_dashboard" %}" class='btn btn-secondary'>Cancel</a>
+  </form>
+{% endblock %}
+

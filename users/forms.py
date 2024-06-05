@@ -8,17 +8,25 @@ class RegistrationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'email', 'password1', 'password2')
+        
     
 class AdminRegistrationForm(UserCreationForm):
     email = forms.EmailField()
     class Meta:
         model = User
         fields = ('username', 'email', 'password1', 'password2')
+        
 
 class LoginForm(AuthenticationForm):
     class Meta:
         model = User
         
+        
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']
+
         
 class BillingInformationForm(forms.ModelForm):
     email = forms.EmailField()
@@ -26,34 +34,80 @@ class BillingInformationForm(forms.ModelForm):
         model = BillingInformation
         fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.fields['mobile_money_number'].required = False
-            self.fields['card_number'].required = False
-            
-        email = forms.EmailField(required=True)
-        payment_method = forms.ChoiceField(choices=BillingInformation.PAYMENT_METHODS)
-        mobile_money_number = forms.CharField(max_length=15, required=False)
-        card_number = forms.CharField(max_length=16, required=False)
-        card_expiry = forms.CharField(max_length=5, required=False)
-        card_cvv = forms.CharField(max_length=3, required=False)
-        price = forms.DecimalField(max_digits=8, decimal_places=2)
-            
-        def clean(self):
-            cleaned_data = super().clean()
-            payment_method = cleaned_data.get('payment_method')
-            
-            if payment_method == "Card":
-                if not cleaned_data.get("card_number"):
-                    self.add_error('card_number', 'Card number is required.')
-                if not cleaned_data.get("card_expiry"):
-                    self.add_error('card_expiry', 'Card expiry date is required.')
-                if not cleaned_data.get("card_cvv"):
-                    self.add_error('card_cvv', 'Card CVV is required.')
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        payment_method = cleaned_data.get('payment_method')
+        mobile_money_number = cleaned_data.get('mobile_money_number')
+        card_number = cleaned_data.get('card_number')
+        card_expiry = cleaned_data.get('card_expiry')
+        card_cvv = cleaned_data.get('card_cvv')
+        
+        if not email:
+            raise forms.ValidationError('Please provide an email address.')
+        
+        if payment_method == "Card":
+            if not card_number:
+                raise forms.ValidationError('Card number is required.')
+            if not card_expiry:
+                raise forms.ValidationError('Card expiry date is required.')
+            if not card_cvv:
+                raise forms.ValidationError('Card CVV is required.')
 
-            elif payment_method == "MTN":
-                if not cleaned_data.get("mobile_money_number"):
-                    self.add_error('mobile_money_number', 'MTN number is required.')
+        elif payment_method == "MTN":
+            if not mobile_money_number:
+                raise forms.ValidationError('MOMO number is required.')
 
-            return cleaned_data
+        return cleaned_data
+        
+
+
+# class BillingInformationForm(forms.ModelForm):
+#     email = forms.EmailField()
+#     class Meta:
+#         model = BillingInformation
+#         fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
+
+        # def __init__(self, *args, **kwargs):
+        #     super().__init__(*args, **kwargs)
+        #     self.fields['mobile_money_number'].required = False
+        #     self.fields['card_number'].required = False
+            
+        # def clean(self):
+        #     cleaned_data = super().clean()
+        #     email = cleaned_data.get('email')
+        #     payment_method = cleaned_data.get('payment_method')
+        #     mobile_money_number = cleaned_data.get('mobile_money_number')
+        #     card_number = cleaned_data.get('card_number')
+        #     card_expiry = cleaned_data.get('card_expiry')
+        #     card_cvv = cleaned_data.get('card_cvv')
+            
+        #     if not email:
+        #         raise forms.ValidationError('Please provide an email address.')
+            
+        #     if payment_method == "Card":
+        #         if not card_number:
+        #             raise forms.ValidationError('Card number is required.')
+        #         if not card_expiry:
+        #             raise forms.ValidationError('Card expiry date is required.')
+        #         if not card_cvv:
+        #             raise forms.ValidationError('Card CVV is required.')
+
+        #     elif payment_method == "MTN":
+        #         if not mobile_money_number:
+        #             raise forms.ValidationError('MTN number is required.')
+
+        #     return cleaned_data
+
+
+
+
+        # if payment_method == 'MTN':
+        #     if not mobile_money_number:
+        #         raise forms.ValidationError('Please provide a mobile money number.')
+        # elif payment_method == 'Card':
+        #     if not card_number or not card_expiry or not card_cvv:
+        #         raise forms.ValidationError('Please provide card details.')
+
+        # return cleaned_data
 

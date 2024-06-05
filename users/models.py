@@ -22,7 +22,7 @@ class BillingInformation(models.Model):
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='billing_information')
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHODS)
-    mobile_money_number = models.CharField(max_length=10, blank=True, null=True)
+    mobile_money_number = models.CharField(max_length=15, blank=True, null=True)
     card_number = models.CharField(max_length=20, blank=True, null=True)
     card_expiry = models.DateField(null=True, blank=True)
     card_cvv = models.CharField(max_length=4, null=True, blank=True)
