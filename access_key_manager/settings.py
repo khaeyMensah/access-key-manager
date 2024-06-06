@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+from celery.schedules import crontab
 from decouple import config, Csv
 import os
 from pathlib import Path
@@ -142,3 +143,15 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home' 
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# Celery Beat Schedule
+CELERY_BEAT_SCHEDULE = {
+    'update-key-statuses-every-day': {
+        'task': 'access_keys.tasks.update_key_statuses',
+        'schedule': crontab(hour=0, minute=0),  # Every day at midnight
+    },
+}
