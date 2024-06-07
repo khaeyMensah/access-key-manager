@@ -1,10 +1,11 @@
+from django import forms
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, logout
 from access_keys.models import AccessKey, KeyLog, School
 from django.contrib import messages
 from users.models import BillingInformation
-from users.forms import AdminRegistrationForm, BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, UserCompleteForm
+from users.forms import BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, UserCompleteForm
 
 
 # Create your views here.
@@ -51,34 +52,28 @@ def admin_dashboard_view(request):
     return render(request, 'users/admin_dashboard.html', context)
 
 
-def register_view(request):
+def registration_options_view(request):
+    return render(request, 'accounts/register_options.html')
+
+
+def register_view(request, user_type):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_school_personnel = True
+            if user_type == 'school_personnel':
+                user.is_school_personnel = True
+                messages.success(request, 'School personnel registration successful.')
+            elif user_type == 'admin':
+                user.is_admin = True
+                messages.success(request, 'Admin registration successful.')
             user.save()
-            messages.success(request, 'Registration successful.')
             auth_login(request, user)
             return redirect('complete_profile')
     else:
         form = RegistrationForm()
+        
     return render(request, 'accounts/register.html', {'form': form})
-
-
-def admin_register_view(request):
-    if request.method == "POST":
-        form = AdminRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.is_admin = True
-            user.save()
-            messages.success(request, 'Registration successful.')
-            auth_login(request, user)
-            return redirect('complete_profile')
-    else:
-        form = AdminRegistrationForm()
-    return render(request, 'accounts/admin_register.html', {'form': form})
 
 
 def login_view(request):

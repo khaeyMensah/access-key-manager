@@ -7,8 +7,9 @@ urlpatterns = [
     path('', users_views.home, name='home'),
     path('school-dashboard/', users_views.school_dashboard_view, name='school_dashboard'),
     path('admin-dashboard/', users_views.admin_dashboard_view, name='admin_dashboard'),
-    path('register/', users_views.register_view, name='register'),
-    path('admin-register/', users_views.admin_register_view, name='admin_register'),
+    path('register/', users_views.registration_options_view, name='register_options'),
+    path('register/school/', users_views.register_view, {'user_type': 'school_personnel'}, name='register_school_personnel'),
+    path('register/admin/', users_views.register_view, {'user_type': 'admin'}, name='register_admin'),
     path('login/', users_views.login_view, name='login'),
     path('logout/', users_views.logout_view, name='logout'),
     

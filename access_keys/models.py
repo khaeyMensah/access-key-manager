@@ -19,6 +19,7 @@ class AccessKey(models.Model):
         ('expired', 'Expired'),
         ('revoked', 'Revoked')
     ], validators=[validate_active_key])
+    
     assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='access_keys')
     procurement_date = models.DateField(auto_now_add=True)
     expiry_date = models.DateField()

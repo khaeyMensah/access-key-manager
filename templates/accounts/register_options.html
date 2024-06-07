@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+  <h1>Welcome to Access Key Manager</h1>
+
+  <h1>Register</h1>
+  <p>Please select your registration type:</p>
+  <a href="{% url 'register_school_personnel' %}" class="btn btn-primary">Register as School Personnel</a>
+  <br>
+  <a href="{% url 'register_admin' %}" class="btn btn-secondary">Register as Admin</a>
+{% endblock %}
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register</h1>
+    <p>Please select your registration type:</p>
+    <a href="{% url 'register_school_personnel' %}">Register as School Personnel</a>
+    <br>
+    <a href="{% url 'register_admin' %}">Register as Admin</a>
+</body>
+</html>
