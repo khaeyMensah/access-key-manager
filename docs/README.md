@@ -18,7 +18,7 @@ The following diagram illustrates the main classes and their relationships in th
 
 The following diagram illustrates the entity relationships in the Access Key Manager database:
 
-![ER Diagram](/docs/er_diagram.png)
+![ER Diagram](/docs/ER_diagram.png)
 
 ## Project Overview
 
