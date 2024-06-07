@@ -46,3 +46,42 @@ class AccessKeyTests(TestCase):
         self.client.login(username='admin_user', password='password123')
         self.client.post(reverse('access_keys:revoke_access_key', args=[access_key.id]))
         self.assertTrue(KeyLog.objects.filter(action__contains='revoked').exists())
+
+class AccessKeyRevocationTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(name='Test School')
+        self.admin = User.objects.create_superuser(
+            username='adminuser',
+            email='admin@example.com',
+            password='adminpassword'
+        )
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpassword',
+            is_school_personnel=True,
+            school=self.school
+        )
+        self.access_key = AccessKey.objects.create(
+            key='ABCD1234',
+            school=self.school,
+            status='active',
+            assigned_to=self.user,
+            expiry_date='2024-12-31'
+        )
+
+    def test_revoke_access_key(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(f'/access-keys/access-keys/revoke/{self.access_key.id}/')
+        self.assertEqual(response.status_code, 302)
+        self.access_key.refresh_from_db()
+        self.assertEqual(self.access_key.status, 'revoked')
+        self.assertIsNotNone(self.access_key.revoked_on)
+        self.assertEqual(self.access_key.revoked_by, self.admin)
+
+    def test_key_log_created_on_revocation(self):
+        self.client.force_login(self.admin)
+        self.client.post(f'/access-keys/access-keys/revoke/{self.access_key.id}/')
+        key_log = KeyLog.objects.filter(access_key=self.access_key).latest('timestamp')
+        self.assertEqual(key_log.action, f'Access key {self.access_key.key} revoked')
+        self.assertEqual(key_log.user, self.admin)

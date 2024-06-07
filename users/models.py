@@ -8,6 +8,7 @@ class User(AbstractUser):
     is_admin = models.BooleanField(default=False)
     school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True, related_name='users')
 
+
 class School(models.Model):
     name = models.CharField(max_length=255)
 
