@@ -34,7 +34,7 @@ def purchase_access_key_view(request):
             billing_info.user = request.user
             billing_info.save()
 
-            # Assume process_payment is a function that processes the payment
+            # Assume process_payment function is processed
             # payment_successful = process_payment(billing_info)
 
             procurement_date=timezone.now().date()

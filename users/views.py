@@ -1,10 +1,17 @@
-from django import forms
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
+from django.template.loader import render_to_string
+from .tokens import account_activation_token
+
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, logout
 from access_keys.models import AccessKey, KeyLog, School
 from django.contrib import messages
-from users.models import BillingInformation
+from users.models import BillingInformation, User
 from users.forms import BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, UserCompleteForm
 
 
@@ -21,11 +28,13 @@ def school_dashboard_view(request):
     
     try:
         school = request.user.school
+        access_keys = school.access_keys.order_by('-procurement_date')
     except School.DoesNotExist:
         messages.error(request, 'No school associated with your account.')
         return redirect('complete_profile')
-
-    access_keys = school.access_keys.order_by('-procurement_date')
+    except AttributeError:
+        messages.error(request, 'Error retrieving access keys. Complete your profile.')
+        return redirect('complete_profile')
     
     context = {
         'school': school,
@@ -56,24 +65,60 @@ def registration_options_view(request):
     return render(request, 'accounts/register_options.html')
 
 
+def send_verification_email(request, user):
+    current_site = get_current_site(request)
+    mail_subject = 'Activate your account.'
+    message = render_to_string('authentication/acc_active_email.html', {
+        'user': user,
+        'domain': current_site.domain,
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        'token': account_activation_token.make_token(user),
+    })
+    to_email = user.email
+    send_mail(
+        mail_subject,
+        message,
+        'ekmpizarro@gmail.com',
+        [to_email],
+    )
+
+
 def register_view(request, user_type):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
+            user.is_active = False
             if user_type == 'school_personnel':
                 user.is_school_personnel = True
-                messages.success(request, 'School personnel registration successful.')
+                messages.success(request, 'School personnel registration successful. Please confirm your email address to complete the registration.')
             elif user_type == 'admin':
                 user.is_admin = True
-                messages.success(request, 'Admin registration successful.')
+                messages.success(request, 'Admin registration successful. Please confirm your email address to complete the registration.')
             user.save()
-            auth_login(request, user)
-            return redirect('complete_profile')
+            send_verification_email(request, user)
+            return redirect('registration_pending')
     else:
         form = RegistrationForm()
         
     return render(request, 'accounts/register.html', {'form': form})
+
+
+def activate(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        messages.success(request, 'Your account has been activated successfully!')
+        return redirect('activation_success')
+    else:
+        messages.error(request, 'Activation link is invalid!')
+        return render(request, 'authentication/activation_invalid.html')
 
 
 def login_view(request):
@@ -86,7 +131,7 @@ def login_view(request):
             if user.is_admin:
                 return redirect('admin_dashboard')
             else:
-                return redirect('school_dashboard')
+                return redirect('home')
             
     else:
         form = LoginForm()
@@ -141,8 +186,7 @@ def profile_complete_view(request):
             form.save()
             messages.success(request, 'Profile updated successfully.')
             return redirect('home')
-        else:
-            messages.error(request, 'Please correct the error below.')
+
     else:
         form = UserCompleteForm(instance=user)
         if user.is_admin or user.school:

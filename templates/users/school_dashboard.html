@@ -4,7 +4,7 @@
 
 {% block content %}
   <h1>School Dashboard</h1>
-  <p>Welcome, {{ request.user.get_full_name }} ({{ request.user.school.name }})</p>
+  <p>Welcome, {{ request.user.get_full_name }}{% if school %} ({{ school.name }}){% endif %}</p>
 
   {% if messages %}
     <ul class="messages">
@@ -16,6 +16,7 @@
 
   <h2>Access Keys</h2>
   {% if access_keys %}
+  <div class="table-responsive">
     <table class="table table-hover">
       <thead>
         <tr>
@@ -36,13 +37,13 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
   {% else %}
     <p>No access keys found.</p>
   {% endif %}
-
   {% if not active_access_key %}
     <a href="{% url 'access_keys:purchase_access_key' %}" class="btn btn-primary">Purchase Access Key</a>
   {% endif %}
 
   <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
-{% endblock %}
+{% endblock content %}

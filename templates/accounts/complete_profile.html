@@ -8,7 +8,7 @@
         <div class="card">
             <div class="card-body">
                 <h1>Complete Your Profile</h1>
-                <form method="POST">
+                <form method="POST" novalidate>
                     {% csrf_token %}
                     {% include 'includes/form.html' %}
                     <div class="d-grid mt-3">

@@ -1,4 +1,6 @@
 from django.urls import path
+from . import views
+from django.views.generic import TemplateView
 from users import views as users_views
 from django.contrib.auth import views as auth_views
 
@@ -7,9 +9,14 @@ urlpatterns = [
     path('', users_views.home, name='home'),
     path('school-dashboard/', users_views.school_dashboard_view, name='school_dashboard'),
     path('admin-dashboard/', users_views.admin_dashboard_view, name='admin_dashboard'),
+    
     path('register/', users_views.registration_options_view, name='register_options'),
     path('register/school/', users_views.register_view, {'user_type': 'school_personnel'}, name='register_school_personnel'),
     path('register/admin/', users_views.register_view, {'user_type': 'admin'}, name='register_admin'),
+    path('activate/<uidb64>/<token>/', views.activate, name='activate'),
+    path('registration_pending/', TemplateView.as_view(template_name='authentication/registration_pending.html'), name='registration_pending'),
+    path('activation_success/', TemplateView.as_view(template_name='authentication/activation_success.html'), name='activation_success'),
+
     path('login/', users_views.login_view, name='login'),
     path('logout/', users_views.logout_view, name='logout'),
     

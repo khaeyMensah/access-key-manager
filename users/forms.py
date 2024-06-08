@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from users.models import BillingInformation, User
+from users.models import BillingInformation, School, User
 
 
 class RegistrationForm(UserCreationForm):
@@ -9,6 +9,14 @@ class RegistrationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'email', 'password1', 'password2')
+     
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.is_active = False 
+        if commit:
+            user.save()
+        return user
         
 
 class LoginForm(AuthenticationForm):
@@ -17,17 +25,21 @@ class LoginForm(AuthenticationForm):
         
 
 class UserCompleteForm(forms.ModelForm):
-    email = forms.EmailField()
+    first_name = forms.CharField(required=True)
+    last_name = forms.CharField(required=True)
+    email = forms.EmailField(required=True)
+    school = forms.ModelChoiceField(queryset=School.objects.all(), required=True, empty_label="Select a school")
 
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'school']
 
+                    
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
         if not email:
-            raise forms.ValidationError('Please provide an email address.')
+            self.add_error('email', 'Please provide an email address.')
         return cleaned_data
         
         
@@ -40,7 +52,7 @@ class ProfileUpdateForm(forms.ModelForm):
 class BillingInformationForm(forms.ModelForm):
     email = forms.EmailField()
     card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
-
+    
     class Meta:
         model = BillingInformation
         fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
