@@ -24,7 +24,7 @@ class LoginForm(AuthenticationForm):
         model = User
         
 
-class UserCompleteForm(forms.ModelForm):
+class ProfileForm(forms.ModelForm):
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
     email = forms.EmailField(required=True)

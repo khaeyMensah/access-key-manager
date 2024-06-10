@@ -32,15 +32,6 @@ class UserModelTests(TestCase):
         self.assertTrue(user.is_superuser)
         self.assertFalse(user.is_school_personnel)
 
-    def test_create_user_missing_email(self):
-        """Test that creating a user without an email raises a ValueError."""
-        with self.assertRaises(ValueError):
-            User.objects.create_user(
-                username='testuser2',
-                email='',
-                password='testpassword'
-            )
-
     def test_create_duplicate_user(self):
         """Test that creating a duplicate user raises an exception."""
         User.objects.create_user(

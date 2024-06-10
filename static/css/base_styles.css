@@ -1,0 +1,86 @@
+/* Mobile-first styles (default) */
+.navbar-brand {
+  font-size: 1.2rem;
+}
+
+.nav-link {
+  font-size: 1rem;
+}
+
+.container {
+  padding: 10px;
+}
+
+#main-content {
+  margin-top: 50px;
+}
+
+#sidebar {
+  background-color: #f8f9fa;
+  padding: 20px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+#sidebar {
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+}
+
+.back a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  /* color: inherit; */
+}
+
+.back i {
+  margin-right: 8px;
+}
+
+/* Desktop styles (992px and above) */
+@media (min-width: 992px) {
+  .navbar-brand {
+    font-size: 1.5rem;
+  }
+
+  .nav-link {
+    font-size: 1.2rem;
+  }
+
+  .container {
+    padding: 20px;
+  }
+
+  .nav-item .btn {
+    margin-left: 10px;
+  }
+
+  .navbar {
+    background-color: #057bf0; /* Darker gray */
+    font-size: 18px;
+    z-index: 2;
+  }
+
+  #sidebar {
+    width: 250px;
+    padding-top: 80px;
+  }
+
+  #sidebar .card {
+    height: 30%;
+  }
+
+  #main-content {
+    padding-left: 250px;
+    margin: auto;
+    margin-top: 50px;
+    width: 90%;
+  }
+}

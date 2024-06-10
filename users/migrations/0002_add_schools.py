@@ -17,7 +17,7 @@ def add_schools(apps, schema_editor):
         "Christian Service University College",
         "College of Agriculture and Natural Resources",
         "DataLink University College",
-        "Ensign Global College", 
+        "Ensign Global College",
         "Garden City University College",
         "George Grant University of Mines and Technology",
         "Ghana Baptist University College",

@@ -12,7 +12,7 @@ from django.contrib.auth import login as auth_login, logout
 from access_keys.models import AccessKey, KeyLog, School
 from django.contrib import messages
 from users.models import BillingInformation, User
-from users.forms import BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, UserCompleteForm
+from users.forms import BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, ProfileForm
 
 
 # Create your views here.
@@ -179,7 +179,7 @@ def profile_complete_view(request):
     user = request.user
     
     if request.method == 'POST':
-        form = UserCompleteForm(request.POST, instance=user)
+        form = ProfileForm(request.POST, instance=user)
         if form.is_valid():
             if not user.is_admin and not user.school:
                 user.school = form.cleaned_data.get('school')
@@ -188,7 +188,7 @@ def profile_complete_view(request):
             return redirect('home')
 
     else:
-        form = UserCompleteForm(instance=user)
+        form = ProfileForm(instance=user)
         if user.is_admin or user.school:
             form.fields.pop('school', None)
 

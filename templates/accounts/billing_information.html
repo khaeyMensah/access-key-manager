@@ -3,24 +3,30 @@
 {% block title %}Billing Information{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Billing Information</h2>
-    {% if billing_info %}
-        <p><strong>Email:</strong> {{ billing_info.email }}</p>
-        <p><strong>Payment Method:</strong> {{ billing_info.payment_method }}</p>
-        {% if billing_info.payment_method == "Card" %}
-            <p><strong>Card Number:</strong> **** **** **** {{ billing_info.card_number|slice:"-4:" }}</p>
-            <p><strong>Card Expiry:</strong> {{ billing_info.card_expiry }}</p>
-            <p><strong>Card CVV:</strong> ***</p>
-        {% elif billing_info.payment_method == "MTN" %}
-            <p><strong>Mobile Money Number:</strong> {{ billing_info.mobile_money_number }}</p>
+<div class="container">
+    <div class="back">
+        <a href="{% url 'profile' %}">
+            <i class="fas fa-arrow-left"></i>Profile
+        </a>
+    </div>
+    <div class="mt-4">
+        <h2>Billing Information</h2>
+        {% if billing_info %}
+            <p><strong>Email:</strong> {{ billing_info.email }}</p>
+            <p><strong>Payment Method:</strong> {{ billing_info.payment_method }}</p>
+            {% if billing_info.payment_method == "Card" %}
+                <p><strong>Card Number:</strong> **** **** **** {{ billing_info.card_number|slice:"-4:" }}</p>
+                <p><strong>Card Expiry:</strong> {{ billing_info.card_expiry }}</p>
+                <p><strong>Card CVV:</strong> ***</p>
+            {% elif billing_info.payment_method == "MTN" %}
+                <p><strong>Mobile Money Number:</strong> {{ billing_info.mobile_money_number }}</p>
+            {% endif %}
+        {% else %}
+            <p>No billing information found.</p>
         {% endif %}
-    {% else %}
-        <p>No billing information found.</p>
-    {% endif %}
+    </div>
     <div class="mt-4">
         <a href="{% url 'update_billing_info' %}" class="btn btn-primary">Update Billing Information</a>
-        <a href="{% url 'profile' %}" class="btn btn-secondary">Back to Profile</a>
     </div>
 </div>
 {% endblock %}

@@ -3,35 +3,68 @@
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Profile</h2>
-    <p><strong>Username:</strong> {{ user.username }}</p>
-    <p><strong>Email:</strong> {{ user.email }}</p>
-    <p><strong>First Name:</strong> {{ user.first_name }}</p>
-    <p><strong>Last Name:</strong> {{ user.last_name }}</p>
-    {% if user.is_school_personnel %}
-        {% if user.school %}
-            <p><strong>School:</strong> {{ user.school.name }}</p>
-            <h3 class="mt-4">Active Access Key</h3>
-            {% if active_key %}
-                <p><strong>Key:</strong> {{ active_key.key }}</p>
-                <p><strong>Status:</strong> {{ active_key.status }}</p>
-                <p><strong>Procurement Date:</strong> {{ active_key.procurement_date }}</p>
-                <p><strong>Expiry Date:</strong> {{ active_key.expiry_date }}</p>
-            {% else %}
-                <p>No active access key found.</p>
-            {% endif %}
-        {% else %}
-            <p>No school associated with your profile. Please <a href="{% url 'complete_profile' %}">complete your profile</a>.</p>
-        {% endif %}
-    {% endif %}
-    <div class="mt-4">
-        <a href="{% url 'update_profile' %}" class="btn btn-primary">Update Profile</a>
+<div class="container">
+    <div class="back">
         {% if user.is_school_personnel %}
-            <a href="{% url 'billing_information' %}" class="btn btn-info">View Billing Information</a>
+        <a href="{% url 'school_dashboard' %}">
+            <i class="fas fa-arrow-left"></i>Dashboard
+        </a>
         {% else %}
-            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Dashbord</a>
+        <a href="{% url 'admin_dashboard' %}">
+            <i class="fas fa-arrow-left"></i>Dashboard
+        </a>
         {% endif %}
     </div>
+    <div class="" id="profile">
+        <div class="profile-item mt-3">
+            <h2>Profile</h2>
+            <p><strong>Username:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>First Name:</strong> {{ user.first_name }}</p>
+            <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+            {% if user.is_school_personnel %}
+                {% if user.school %}
+                    <p><strong>School:</strong> {{ user.school.name }}</p>
+                    <div class="mt-3">
+                        <a href="{% url 'update_profile' %}" class="btn btn-primary">Update Profile</a>
+                    </div>
+    
+        </div>
+        <div class="profile-item">
+                <h2>Active Access Key</h2>
+                {% if active_key %}
+                    <p><strong>Key:</strong> {{ active_key.key }}</p>
+                    <p><strong>Status:</strong> {{ active_key.status }}</p>
+                    <p><strong>Procurement Date:</strong> {{ active_key.procurement_date }}</p>
+                    <p><strong>Expiry Date:</strong> {{ active_key.expiry_date }}</p>
+                    {% else %}
+                        <p>No active access key found.</p>
+                    {% endif %}
+                {% else %}
+                    <p>No school associated with your profile. Please <a href="{% url 'complete_profile' %}">complete your profile</a>.</p>
+                {% endif %}
+            {% endif %}
+            <div class="mt-3">
+                {% if user.is_school_personnel %}
+                <a href="{% url 'billing_information' %}" class="btn btn-info">View Billing Information</a>
+                {% else %}
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Dashbord</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% comment %} <div class=" profile-buttons">
+        <div class="button-item">
+            <a href="{% url 'update_profile' %}" class="btn btn-primary">Update Profile</a>
+        </div>
+        <div class="button-item">
+            {% if user.is_school_personnel %}
+            <a href="{% url 'billing_information' %}" class="btn btn-info">View Billing Information</a>
+            {% else %}
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Dashbord</a>
+            {% endif %}
+        </div>
+    </div> {% endcomment %}
 </div>
+
 {% endblock %}

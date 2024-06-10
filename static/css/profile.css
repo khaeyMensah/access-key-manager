@@ -1,0 +1,41 @@
+#profile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.profile-item {
+  width: 100%;
+}
+
+.profile-item:last-child {
+  margin-top: 40px;
+}
+
+/* .back a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.back i {
+  margin-right: 8px;
+} */
+
+@media (min-width: 992px) {
+  #profile {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .profile-item {
+    width: 45%;
+  }
+
+  .profile-item:last-child {
+    margin: 0;
+  }
+}

@@ -1,0 +1,43 @@
+.container h1 a {
+  text-decoration: none;
+  color: #000000;
+}
+
+#login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 80vh;
+}
+
+#login-page .card {
+  border: none;
+}
+
+#login-page .card-title {
+  text-align: center;
+  margin: 150px 0 20px 0;
+}
+
+.text-center a {
+  text-decoration: none;
+}
+
+#register-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#register-page .card {
+  border: none;
+}
+
+#register-page .card-title {
+  text-align: center;
+  margin: 150px 0 20px 0;
+}
+
+.text-center a {
+  text-decoration: none;
+}

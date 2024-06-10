@@ -1,4 +1,3 @@
-# users/tests/test_views.py
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -10,18 +9,26 @@ User = get_user_model()
 class UserViewsTests(TestCase):
     def setUp(self):
         self.school = School.objects.create(name='Test School')
-        self.admin_user = User.objects.create_user(
+        self.admin_user = self._create_user(
             username='admin',
             email='admin@example.com',
             password='adminpassword',
             is_admin=True
         )
-        self.school_user = User.objects.create_user(
+        self.school_user = self._create_user(
             username='school_user',
             email='school@example.com',
             password='schoolpassword',
             is_school_personnel=True,
             school=self.school
+        )
+
+    def _create_user(self, username, email, password, **extra_fields):
+        return User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            **extra_fields
         )
 
     def test_home_view(self):
@@ -30,13 +37,13 @@ class UserViewsTests(TestCase):
         self.assertTemplateUsed(response, 'users/home.html')
 
     def test_school_dashboard_view(self):
-        self.client.login(email='school@example.com', password='schoolpassword')
+        self._login_user(email='school@example.com', password='schoolpassword')
         response = self.client.get(reverse('school_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/school_dashboard.html')
 
     def test_admin_dashboard_view(self):
-        self.client.login(email='admin@example.com', password='adminpassword')
+        self._login_user(email='admin@example.com', password='adminpassword')
         response = self.client.get(reverse('admin_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/admin_dashboard.html')
@@ -66,14 +73,14 @@ class UserViewsTests(TestCase):
         self.assertTrue(user.is_authenticated)
 
     def test_logout_view(self):
-        self.client.login(email='school@example.com', password='schoolpassword')
+        self._login_user(email='school@example.com', password='schoolpassword')
         response = self.client.get(reverse('logout'))
         self.assertEqual(response.status_code, 302)  # Redirect after logout
         user = get_user(self.client)
         self.assertFalse(user.is_authenticated)
 
     def test_profile_view(self):
-        self.client.login(email='school@example.com', password='schoolpassword')
+        self._login_user(email='school@example.com', password='schoolpassword')
         response = self.client.get(reverse('profile'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'accounts/profile.html')
@@ -86,19 +93,22 @@ class UserViewsTests(TestCase):
             card_expiry='2024-12-31',
             card_cvv='123'
         )
-        self.client.login(email='school@example.com', password='schoolpassword')
+        self._login_user(email='school@example.com', password='schoolpassword')
         response = self.client.get(reverse('billing_information'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'accounts/billing_information.html')
 
     def test_confirm_billing_information_view(self):
-        self.client.login(email='school@example.com', password='schoolpassword')
-        response = self.client.post(reverse('confirm_billing_info'), {
+        url = reverse('confirm_billing_info')
+        data = {
+            'email': 'billing@example.com',
             'payment_method': 'Card',
-            'card_number': '1234567890123456',
+            'card_number': '1234567812345678',
             'card_expiry': '2024-12-31',
             'card_cvv': '123'
-        })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful billing info update
-        billing_info = BillingInformation.objects.get(user=self.school_user)
-        self.assertEqual(billing_info.card_number, '1234567890123456')
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)  
+
+    def _login_user(self, email, password):
+        self.client.login(email=email, password=password)

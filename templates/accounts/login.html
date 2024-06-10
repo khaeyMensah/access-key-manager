@@ -1,23 +1,26 @@
 {% extends 'base_accounts.html' %}
 
+{% load crispy_forms_tags %}
+
 {% block title %}Log in to Access Key Manager{% endblock %}
 
 {% block content %}
-  <div class="row justify-content-center">
+  <div class="row justify-content-center" id="login-page">
     <div class="col-lg-4 col-md-6 col-sm-8">
       <div class="card">
         <div class="card-body">
-          <h3 class="card-title">Log in</h3>
+          <h3 class="card-title">Welcome Back.</h3>
           <form method="post" novalidate>
             {% csrf_token %}
-            {% include 'includes/form.html' %}
+            {% comment %} {% include 'includes/form.html' %} {% endcomment %}
+            {{ form|crispy}}
             <input type="hidden" name="next" value="{{ next }}">
             <div class="d-grid mt-3">
-              <button type="submit" class="btn btn-light btn-block">Log in</button>
+              <button type="submit" class="btn btn-success btn-block">Log in</button>
             </div>
           </form>
         </div>
-        <div class="card-footer text-muted text-center">
+        <div class="text-muted text-center mt-3">
           Don't have an account yet? <a href="{% url "register_options" %}">Register</a>
         </div>
       </div>

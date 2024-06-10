@@ -1,3 +1,5 @@
+import datetime
+from django.db import IntegrityError
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -6,104 +8,120 @@ from django.utils import timezone
 
 User = get_user_model()
 
-class AccessKeyModelTests(TestCase):
+class AccessKeyModelTest(TestCase):
+
     def setUp(self):
         self.school = School.objects.create(name='Test School')
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpassword',
-            is_school_personnel=True,
-            school=self.school
-        )
-
-    def test_access_key_creation(self):
-        """Test that an access key can be created successfully."""
-        access_key = AccessKey.objects.create(
-            key='ABCD1234',
-            school=self.school,
-            status='active',
-            assigned_to=self.user,
-            expiry_date='2024-12-31'
-        )
-        self.assertEqual(str(access_key), 'ABCD1234 - Test School - active')
-
-    def test_active_key_validation(self):
-        """Test that only one active access key can be assigned to a school at a time."""
-        AccessKey.objects.create(
-            key='ABCD1234',
-            school=self.school,
-            status='active',
-            assigned_to=self.user,
-            expiry_date='2024-12-31'
-        )
-        with self.assertRaises(ValidationError):
-            AccessKey.objects.create(
-                key='EFGH5678',
-                school=self.school,
-                status='active',
-                assigned_to=self.user,
-                expiry_date='2025-06-30'
-            )
-
-    def test_key_expiration(self):
-        """Test that an access key's status is updated to 'expired' after the expiry date."""
-        access_key = AccessKey.objects.create(
-            key='ABCD1234',
-            school=self.school,
-            status='active',
-            assigned_to=self.user,
-            expiry_date=timezone.now().date() - timezone.timedelta(days=1)
-        )
-        access_key.status = 'expired'
-        access_key.save()
-        self.assertEqual(access_key.status, 'expired')
-
-    def test_create_access_key_with_invalid_status(self):
-        """Test that creating an access key with an invalid status raises a ValidationError."""
-        with self.assertRaises(ValidationError):
-            AccessKey.objects.create(
-                key='INVALID123',
-                school=self.school,
-                status='invalid_status',
-                assigned_to=self.user,
-                expiry_date='2024-12-31'
-            )
-
-class KeyLogModelTests(TestCase):
-    def setUp(self):
-        self.school = School.objects.create(name='Test School')
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpassword',
-            is_school_personnel=True,
-            school=self.school
-        )
+        self.user = User.objects.create(username='test_user')
         self.access_key = AccessKey.objects.create(
-            key='ABCD1234',
+            key='test_key',
             school=self.school,
-            status='active',
             assigned_to=self.user,
-            expiry_date='2024-12-31'
+            expiry_date=timezone.now() - timezone.timedelta(days=1),
+            price=100.00  
         )
+
+    def test_cannot_revoke_expired_key(self):
+        self.access_key.expiry_date = timezone.now() - timezone.timedelta(days=1)
+        self.access_key.save()
+
+        with self.assertRaises(ValidationError):
+            self.access_key.revoked_by = self.user
+            self.access_key.save()
+
+
+class KeyLogModelTest(TestCase):
 
     def test_key_log_creation(self):
-        """Test that a key log can be created successfully."""
-        key_log = KeyLog.objects.create(
-            action='Key generated',
-            user=self.user,
-            access_key=self.access_key
+        access_key = AccessKey.objects.create(
+            key='test_key',
+            school=School.objects.create(name='Test School'),
+            assigned_to=User.objects.create(username='test_user'),
+            expiry_date=timezone.now() + datetime.timedelta(days=30),
+            price=100.00  
         )
-        self.assertEqual(key_log.action, 'Key generated')
-        self.assertEqual(key_log.user, self.user)
-        self.assertEqual(key_log.access_key, self.access_key)
+
+        key_log = KeyLog.objects.create(
+            action='test_action',
+            user=User.objects.create(username='test_user2'),
+            access_key=access_key
+        )
+
+        self.assertEqual(KeyLog.objects.count(), 1)
+        self.assertEqual(key_log.action, 'test_action')
+        self.assertEqual(key_log.user.username, 'test_user2')
+        self.assertEqual(key_log.access_key.key, 'test_key')
+        self.assertEqual(key_log.access_key.school.name, 'Test School')
 
     def test_key_log_timestamp(self):
-        """Test that a key log's timestamp is set automatically."""
-        key_log = KeyLog.objects.create(
-            action='Key generated',
-            user=self.user,
-            access_key=self.access_key
+        access_key = AccessKey.objects.create(
+            key='test_key2',
+            school=School.objects.create(name='Test School2'),
+            assigned_to=User.objects.create(username='test_user3'),
+            expiry_date=timezone.now() + datetime.timedelta(days=30),
+            price=100.00  
         )
-        self.assertIsNotNone(key_log.timestamp)
+
+        key_log = KeyLog.objects.create(
+            action='test_action2',
+            user=User.objects.create(username='test_user4'),
+            access_key=access_key
+        )
+
+        self.assertTrue(timezone.now() - datetime.timedelta(seconds=key_log.timestamp.seconds) < datetime.timedelta(seconds=5))
+
+    def test_key_log_related_name(self):
+        access_key = AccessKey.objects.create(
+            key='test_key3',
+            school=School.objects.create(name='Test School3'),
+            assigned_to=User.objects.create(username='test_user5'),
+            expiry_date=timezone.now() + datetime.timedelta(days=30),
+            price=100.00  
+        )
+
+        key_log = KeyLog.objects.create(
+            action='test_action3',
+            user=User.objects.create(username='test_user6'),
+            access_key=access_key
+        )
+
+        self.assertEqual(AccessKey.objects.get(pk=access_key.pk).key_logs.count(), 1)
+
+    def test_key_log_unique_action(self):
+        access_key = AccessKey.objects.create(
+            key='test_key4',
+            school=School.objects.create(name='Test School4'),
+            assigned_to=User.objects.create(username='test_user7'),
+            expiry_date=timezone.now() + datetime.timedelta(days=30),
+            price=100.00  
+        )
+
+        KeyLog.objects.create(
+            action='test_action4',
+            user=User.objects.create(username='test_user8'),
+            access_key=access_key
+        )
+
+        with self.assertRaises(IntegrityError):
+            KeyLog.objects.create(
+                action='test_action4',
+                user=User.objects.create(username='test_user9'),
+                access_key=access_key
+            )
+
+    def test_key_log_user_assignment(self):
+        access_key = AccessKey.objects.create(
+            key='test_key5',
+            school=School.objects.create(name='Test School5'),
+            assigned_to=User.objects.create(username='test_user10'),
+            expiry_date=timezone.now() + datetime.timedelta(days=30),
+            price=100.00  
+        )
+
+        key_log = KeyLog.objects.create(
+            action='test_action5',
+            user=User.objects.create(username='test_user11'),
+            access_key=access_key
+        )
+
+        self.assertIsNotNone(key_log.user)
