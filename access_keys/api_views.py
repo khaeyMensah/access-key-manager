@@ -10,7 +10,7 @@ def check_access_key_status_view(request, email):
 
     try:
         user = User.objects.get(email=email)
-        school = user.school  # Directly accessing the related school through the ForeignKey field
+        school = user.school
         if not school:
             return Response({'error': 'User is not associated with any school.'}, status=404)
         
@@ -20,5 +20,8 @@ def check_access_key_status_view(request, email):
             return Response(serializer.data, status=200)
         else:
             return Response({'error': 'No active access key found.'}, status=404)
+    
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

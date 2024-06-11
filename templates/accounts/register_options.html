@@ -1,12 +1,22 @@
-{% extends 'base.html' %}
+{% extends 'base_accounts.html' %}
 
 {% block title %}Register{% endblock %}
 
 {% block content %}
-  <h1>Register</h1>
-  <p>Please select your registration type:</p>
-  <a href="{% url 'register_school_personnel' %}" class="btn btn-primary">Register as School Personnel</a>
-  <a href="{% url 'register_admin' %}" class="btn btn-secondary">Register as Admin</a>
+<div class="row justify-content-center" id="register-options">
+  <div class="col-lg-4 col-md-6 col-sm-12">
+    <div class="card">
+      <div class="card-body">
+        <h6>Register</h6>
+        <div class="d-grid">
+          <a href="{% url 'register_school_personnel' %}" class="btn btn-primary mt-2">Register as School Personnel</a>
+          <a href="{% url 'register_admin' %}" class="btn btn-secondary mt-2">Register as Admin</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+ 
 {% endblock %}
 
 

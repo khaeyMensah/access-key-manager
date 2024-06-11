@@ -7,7 +7,7 @@ class User(AbstractUser):
     is_school_personnel = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True, related_name='users')
-
+    staff_id = models.CharField(max_length=50, blank=True, null=True)
 
 class School(models.Model):
     name = models.CharField(max_length=255)

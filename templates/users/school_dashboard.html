@@ -3,7 +3,6 @@
 {% block title %}School Dashboard{% endblock %}
 
 {% block content %}
-{% comment %} <div class="container"> {% endcomment %}
   <div class="back">
       <a href="{% url 'home' %}">
           <i class="fas fa-arrow-left"></i>Home
@@ -25,7 +24,7 @@
     {% if access_keys %}
     <div class="table-responsive">
       <table class="table table-hover">
-        <thead>
+        <thead class=" table-dark">
           <tr>
             <th>Key</th>
             <th>Status</th>
@@ -33,7 +32,7 @@
             <th>Expiry Date</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="table-group-divider">
           {% for access_key in access_keys %}
             <tr class="access-key-{{ access_key.status }}">
               <td>{{ access_key.key }}</td>

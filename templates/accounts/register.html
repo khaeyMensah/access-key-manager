@@ -9,12 +9,12 @@
         <div class="col-lg-6 col-md-8 col-sm-10">
             <div class="card">
                 <div class="card-body">
-                    <h3 class="card-title">Register</h3>
+                    <h4 class="card-title text-center">Register</h4>
                     <form method="POST" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
-                        <div class="d-grid mt-3">
-                            <button type="submit" class="btn btn-success btn-block">Register</button>
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-block">Register</button>
                         </div>
                     </form>
                 </div>

@@ -35,6 +35,18 @@
   border-top-right-radius: 10px;
 }
 
+#key-log {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.5s ease;
+}
+
+#key-log-heading {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.5s ease;
+}
+
 /* Media query for smaller screens for tables*/
 @media (max-width: 768px) {
   .table {
@@ -43,6 +55,6 @@
 
   .table th,
   .table td {
-    padding: 8px; /* Adjust padding for smaller cells */
+    padding: 8px;
   }
 }

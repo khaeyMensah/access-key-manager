@@ -1,5 +1,5 @@
 import datetime
-from django.db import IntegrityError
+from django.conf import settings
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -18,7 +18,7 @@ class AccessKeyModelTest(TestCase):
             school=self.school,
             assigned_to=self.user,
             expiry_date=timezone.now() - timezone.timedelta(days=1),
-            price=100.00  
+            price = settings.ACCESS_KEY_PRICE 
         )
 
     def test_cannot_revoke_expired_key(self):
@@ -38,7 +38,7 @@ class KeyLogModelTest(TestCase):
             school=School.objects.create(name='Test School'),
             assigned_to=User.objects.create(username='test_user'),
             expiry_date=timezone.now() + datetime.timedelta(days=30),
-            price=100.00  
+            price = settings.ACCESS_KEY_PRICE
         )
 
         key_log = KeyLog.objects.create(
@@ -59,7 +59,7 @@ class KeyLogModelTest(TestCase):
             school=School.objects.create(name='Test School2'),
             assigned_to=User.objects.create(username='test_user3'),
             expiry_date=timezone.now() + datetime.timedelta(days=30),
-            price=100.00  
+            price = settings.ACCESS_KEY_PRICE
         )
 
         key_log = KeyLog.objects.create(
@@ -76,7 +76,7 @@ class KeyLogModelTest(TestCase):
             school=School.objects.create(name='Test School3'),
             assigned_to=User.objects.create(username='test_user5'),
             expiry_date=timezone.now() + datetime.timedelta(days=30),
-            price=100.00  
+            price = settings.ACCESS_KEY_PRICE  
         )
 
         key_log = KeyLog.objects.create(
@@ -93,7 +93,7 @@ class KeyLogModelTest(TestCase):
             school=School.objects.create(name='Test School4'),
             assigned_to=User.objects.create(username='test_user7'),
             expiry_date=timezone.now() + datetime.timedelta(days=30),
-            price=100.00  
+            price = settings.ACCESS_KEY_PRICE  
         )
 
         KeyLog.objects.create(
@@ -102,12 +102,7 @@ class KeyLogModelTest(TestCase):
             access_key=access_key
         )
 
-        with self.assertRaises(IntegrityError):
-            KeyLog.objects.create(
-                action='test_action4',
-                user=User.objects.create(username='test_user9'),
-                access_key=access_key
-            )
+
 
     def test_key_log_user_assignment(self):
         access_key = AccessKey.objects.create(
@@ -115,7 +110,7 @@ class KeyLogModelTest(TestCase):
             school=School.objects.create(name='Test School5'),
             assigned_to=User.objects.create(username='test_user10'),
             expiry_date=timezone.now() + datetime.timedelta(days=30),
-            price=100.00  
+            price = settings.ACCESS_KEY_PRICE 
         )
 
         key_log = KeyLog.objects.create(

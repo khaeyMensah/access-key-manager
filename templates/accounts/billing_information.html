@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Billing Information{% endblock %}
+{% block title %}Payment Details{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,23 +10,22 @@
         </a>
     </div>
     <div class="mt-4">
-        <h2>Billing Information</h2>
+        <h4>Payment Details</h4>
         {% if billing_info %}
-            <p><strong>Email:</strong> {{ billing_info.email }}</p>
             <p><strong>Payment Method:</strong> {{ billing_info.payment_method }}</p>
             {% if billing_info.payment_method == "Card" %}
                 <p><strong>Card Number:</strong> **** **** **** {{ billing_info.card_number|slice:"-4:" }}</p>
-                <p><strong>Card Expiry:</strong> {{ billing_info.card_expiry }}</p>
-                <p><strong>Card CVV:</strong> ***</p>
+                <p><strong>Expiry:</strong> {{ billing_info.card_expiry }}</p>
+                <p><strong>CVV:</strong> ***</p>
             {% elif billing_info.payment_method == "MTN" %}
                 <p><strong>Mobile Money Number:</strong> {{ billing_info.mobile_money_number }}</p>
             {% endif %}
         {% else %}
-            <p>No billing information found.</p>
+            <p>No details found.</p>
         {% endif %}
     </div>
     <div class="mt-4">
-        <a href="{% url 'update_billing_info' %}" class="btn btn-primary">Update Billing Information</a>
+        <a href="{% url 'update_billing_info' %}" class="btn btn-primary">Update Payment Details</a>
     </div>
 </div>
 {% endblock %}

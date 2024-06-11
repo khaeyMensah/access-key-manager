@@ -15,9 +15,9 @@ class Command(BaseCommand):
             
             # Log the expiration
             KeyLog.objects.create(
-                access_key=key,
-                action=f'Access key {key.key} expired.',
-                user=None  
+                access_key = key,
+                action = f'Access key {key.key} expired.',
+                user = None  
             )
             
         self.stdout.write(self.style.SUCCESS(f'Successfully marked {expired_keys.count()} keys as expired.'))

@@ -1,4 +1,9 @@
 /* Mobile-first styles (default) */
+html,
+body {
+  height: 100%;
+}
+
 .navbar-brand {
   font-size: 1.2rem;
 }
@@ -11,26 +16,24 @@
   padding: 10px;
 }
 
+.user-icon {
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 40px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.username {
+  display: block;
+  font-size: 15px;
+}
+
 #main-content {
   margin-top: 50px;
-}
-
-#sidebar {
-  background-color: #f8f9fa;
-  padding: 20px;
-}
-
-html,
-body {
-  height: 100%;
-}
-
-#sidebar {
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  overflow-y: auto;
 }
 
 .back a {
@@ -42,6 +45,10 @@ body {
 
 .back i {
   margin-right: 8px;
+}
+
+.card {
+  border: none;
 }
 
 /* Desktop styles (992px and above) */
@@ -63,18 +70,45 @@ body {
   }
 
   .navbar {
-    background-color: #057bf0; /* Darker gray */
     font-size: 18px;
     z-index: 2;
   }
 
   #sidebar {
+    background-color: #f8f9fa;
+    padding: 20px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
     width: 250px;
-    padding-top: 80px;
+    flex-direction: column;
+    padding-top: 70px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
   }
 
   #sidebar .card {
-    height: 30%;
+    width: 100%;
+    height: 28%;
+    margin: 20px 0 20px 0;
+    padding: 10px;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(
+      100.59deg,
+      rgba(230, 237, 251, 0.61) -3.94%,
+      rgba(14, 34, 29, 0.54) 103.5%
+    );
+    color: rgb(0, 0, 0);
+    border-radius: 8px;
+  }
+
+  #sidebar .card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
   }
 
   #main-content {

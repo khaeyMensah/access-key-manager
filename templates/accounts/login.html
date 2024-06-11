@@ -6,17 +6,16 @@
 
 {% block content %}
   <div class="row justify-content-center" id="login-page">
-    <div class="col-lg-4 col-md-6 col-sm-8">
+    <div class="col-lg-4 col-md-6 col-sm-12">
       <div class="card">
         <div class="card-body">
-          <h3 class="card-title">Welcome Back.</h3>
+          <h4 class="card-title text-center">Welcome Back</h4>
           <form method="post" novalidate>
             {% csrf_token %}
-            {% comment %} {% include 'includes/form.html' %} {% endcomment %}
             {{ form|crispy}}
             <input type="hidden" name="next" value="{{ next }}">
             <div class="d-grid mt-3">
-              <button type="submit" class="btn btn-success btn-block">Log in</button>
+              <button type="submit" class="btn btn-primary btn-block">Log in</button>
             </div>
           </form>
         </div>

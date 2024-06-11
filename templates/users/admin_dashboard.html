@@ -5,79 +5,85 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-  <h1>Admin Dashboard</h1>
-  <p>Welcome, {{ request.user.get_full_name }}</p>
-
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
-  <h2>Access Keys</h2>
-  {% if access_keys %}
-  <div class="table-responsive">
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th>Key</th>
-          <th>School</th>
-          <th>Status</th>
-          <th>Procurement Date</th>
-          <th>Expiry Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for access_key in access_keys %}
-          <tr class="access-key-{{ access_key.status }}">
-            <td>{{ access_key.key }}</td>
-            <td>{{ access_key.school.name }}</td>
-            <td>{{ access_key.get_status_display }}</td>
-            <td>{{ access_key.procurement_date }}</td>
-            <td>{{ access_key.expiry_date }}</td>
-            <td>
-              {% if access_key.status == 'active' %}
-                <a href="{% url 'access_keys:revoke_access_key' access_key.id %}" class='btn btn-primary'>Revoke</a>
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody> 
-    </table>
+  <div class="back">
+    <a href="{% url 'home' %}">
+        <i class="fas fa-arrow-left"></i>Home
+    </a>
   </div>
-  {% else %}
-    <p>No access keys found.</p>
-  {% endif %}
+  <div class="mt-4">
+    <h1>Admin Dashboard</h1>
+    <p>Welcome, {{ request.user.get_full_name }}</p>
 
-  <h2>Key Logs</h2>
-  <button id="toggle-log" class="btn btn-info">View Logs</button>
-  <div id="key-log">
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th>User</th>
-          <th>Action</th>
-          <th>Timestamp</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for log in key_logs %}
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="mt-3">
+    <h2>Access Keys</h2>
+    {% if access_keys %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-dark">
           <tr>
-            <td>{{ log.user.get_full_name }}</td>
-            <td>{{ log.action }}</td>
-            <td>{{ log.timestamp }}</td>
+            <th>Key</th>
+            <th>School</th>
+            <th>Status</th>
+            <th>Procurement Date</th>
+            <th>Expiry Date</th>
+            <th>Actions</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody class="table-group-divider">
+          {% for access_key in access_keys %}
+            <tr class="access-key-{{ access_key.status }}">
+              <td>{{ access_key.key }}</td>
+              <td>{{ access_key.school.name }}</td>
+              <td>{{ access_key.get_status_display }}</td>
+              <td>{{ access_key.procurement_date }}</td>
+              <td>{{ access_key.expiry_date }}</td>
+              <td>
+                {% if access_key.status == 'active' %}
+                  <a href="{% url 'access_keys:revoke_access_key' access_key.id %}" class='btn btn-primary'>Revoke</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody> 
+      </table>
+    </div>
+    {% else %}
+      <p>No access keys found.</p>
+    {% endif %}
+    </div>    
+
+    <div class="mt-4">
+      <button id="toggle-log" class="btn btn-info">View Logs</button>
+      <div id="key-log">
+        <h2>Key Logs</h2>
+        <table class="table table-hover mt-3">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Action</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in key_logs %}
+              <tr>
+                <td>{{ log.user.get_full_name }}</td>
+                <td>{{ log.action }}</td>
+                <td>{{ log.timestamp }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <a href="{% url 'logout' %}" class="btn btn-secondary mt-3">Logout</a>
+    </div>
   </div>
-
-  <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
-
-
-  <script src="{% static 'js/admin_dashboard.js' %}"></script>
-
 {% endblock %}

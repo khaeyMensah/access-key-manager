@@ -17,10 +17,15 @@
     <div class="col-lg-6 col-md-8 col-sm-10">
       <div class="card">
         <div class="card-body">
+          <div class="bg-info">
+            <p>Fixed price for access key: GH¢: {{ access_key_price }}</p>
+            <p>Please provide your payment details to Purchase an Access Key</p>
+          </div>
           <form method="post" novalidate>
-            {% comment %} <h3>Billing Information</h3> {% endcomment %}
             {% csrf_token %}
             {{ form|crispy }}
+            <div>
+            </div>
             <div class="mt-3">
               <button type="submit" class="btn btn-primary">Submit</button>
               <a href="{% url 'school_dashboard' %}" class="btn btn-secondary">Cancel</a>

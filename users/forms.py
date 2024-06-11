@@ -28,12 +28,13 @@ class ProfileForm(forms.ModelForm):
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
     email = forms.EmailField(required=True)
-    school = forms.ModelChoiceField(queryset=School.objects.all(), required=True, empty_label="Select a school")
-
+    school = forms.ModelChoiceField(queryset=School.objects.all(), required=False, empty_label="Select a school")
+    staff_id = forms.CharField(required=False, label='Staff ID')
+    
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'school']
-
+        fields = ['first_name', 'last_name', 'email', 'school', 'staff_id']
+                    
                     
     def clean(self):
         cleaned_data = super().clean()
@@ -52,7 +53,8 @@ class ProfileUpdateForm(forms.ModelForm):
 class BillingInformationForm(forms.ModelForm):
     email = forms.EmailField()
     card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
-    
+    confirm_purchase = forms.BooleanField(required=True, initial=False, label='Confirm purchase')
+       
     class Meta:
         model = BillingInformation
         fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
@@ -86,3 +88,13 @@ class BillingInformationForm(forms.ModelForm):
                 self.add_error(None, 'Credit card details are not required for MOMO payment.')
 
         return cleaned_data
+
+
+class UpdateBillingInformationForm(forms.ModelForm):
+    card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+
+    class Meta:
+        model = BillingInformation
+        fields = ['payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
+        
+ 

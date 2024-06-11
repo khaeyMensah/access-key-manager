@@ -24,10 +24,13 @@
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ user.username }}
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="user-icon d-none d-lg-flex justify-content-center align-items-center bg-dark">
+                                    {{ user.first_name|slice:":1"|upper }}
+                                </div>
+                                <span class="username ms-2">{{ user.username }}</span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end bg-light" aria-labelledby="navbarDropdown">
                                 {% if not user.school and user.is_school_personnel %}
                                     <li><a class="dropdown-item" href="{% url 'complete_profile' %}">Complete Profile</a></li>
                                 {% else %}
@@ -47,10 +50,10 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link btn btn-primary" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-secondary" href="{% url 'register_options' %}">Register</a>
+                            <a class="nav-link " href="{% url 'register_options' %}">Register</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -63,32 +66,73 @@
             <!-- Sidebar -->
             <div class="col-12 col-lg-3 d-none d-lg-block" id="sidebar">
                 {% block sidebar %}
-                <div class="card mb-3">
-                    <div class="card-header">
-                        Card 1
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">Content for card 1.</p>
-                    </div>
+                <!-- Card 1 -->
+                <div class="card">
+                    {% if request.user.is_authenticated %}
+                        {% if request.user.is_admin %}
+                            <h2>{{ total_schools }}</h2>
+                            <p><small>Total Schools Registered</small></p>
+                        {% elif request.user.is_school_personnel %}
+                            {% if active_key %}
+                                <h6>{{ active_key.key }}</h6>
+                            {% else %}
+                                <h4>No Active Key</h4>
+                            {% endif %}
+                            <p><small>Active Key</small></p>
+                        {% else %}
+                            <h2>0</h2>
+                            <p><small>Total Schools Registered</small></p>
+                        {% endif %}
+                    {% else %}
+                        <h2>0</h2>
+                        <p>Total Schools Registered</p>
+                    {% endif %}
                 </div>
-                <div class="card mb-3">
-                    <div class="card-header">
-                        Card 2
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">Content for card 2.</p>
-                    </div>
+            
+                <!-- Card 2 -->
+                <div class="card">
+                    {% if request.user.is_authenticated %}
+                        {% if request.user.is_admin %}
+                            <h2>{{ total_active_keys }}</h2>
+                            <p><small>Total Active Keys</small></p>
+                        {% elif request.user.is_school_personnel %}
+                            {% if active_key %}
+                                <h3>{{ active_key.expiry_date }}</h3>
+                            {% else %}
+                                <h4>No Active Key</h4>
+                            {% endif %}
+                            <p><small>Expiry Date</small></p>
+                        {% else %}
+                            <h2>0</h2>
+                            <p><small>Total Active Keys</small></p>
+                        {% endif %}
+                    {% else %}
+                        <h2>0</h2>
+                        <p><small>Total Active Keys</small></p>
+                    {% endif %}
                 </div>
-                <div class="card mb-3">
-                    <div class="card-header">
-                        Card 3
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">Content for card 3.</p>
-                    </div>
+            
+                <!-- Card 3 -->
+                <div class="card">
+                    {% if request.user.is_authenticated %}
+                        {% if request.user.is_admin %}
+                            <h2>{{ total_keys_purchased }}</h2>
+                            <p><small>Total Keys Purchased</small></p>
+                        {% elif request.user.is_school_personnel %}
+                            <h2>{{ keys_purchased_count }}</h2>
+                            <p><small>Key(s) Purchased</small></p>
+                        {% else %}
+                            <h2>0</h2>
+                            <p><small>Total Keys Purchased</small></p>
+                        {% endif %}
+                    {% else %}
+                        <h2>0</h2>
+                        <p><small>Total Keys Purchased</small></p>
+                    {% endif %}
                 </div>
                 {% endblock %}
             </div>
+
             <!-- Main content -->
             <div class="col-12 col-lg-9" id="main-content">
                 {% block content %}{% endblock %}
@@ -97,6 +141,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="{% static 'js/admin_dashboard.js' %}"></script>
+    
     {% block script %}{% endblock %}
     
     {% endblock body %}

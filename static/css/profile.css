@@ -13,16 +13,6 @@
   margin-top: 40px;
 }
 
-/* .back a {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.back i {
-  margin-right: 8px;
-} */
-
 @media (min-width: 992px) {
   #profile {
     display: flex;

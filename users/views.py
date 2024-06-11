@@ -12,12 +12,14 @@ from django.contrib.auth import login as auth_login, logout
 from access_keys.models import AccessKey, KeyLog, School
 from django.contrib import messages
 from users.models import BillingInformation, User
-from users.forms import BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, ProfileForm
+from users.forms import BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, ProfileForm, UpdateBillingInformationForm
+from users.contexts import common_context_data
 
 
 # Create your views here.
 def home(request):
-    return render(request, 'users/home.html')
+    context = common_context_data(request)
+    return render(request, 'users/home.html', context)
 
 
 @login_required
@@ -36,10 +38,11 @@ def school_dashboard_view(request):
         messages.error(request, 'Error retrieving access keys. Complete your profile.')
         return redirect('complete_profile')
     
-    context = {
+    context = common_context_data(request)
+    context.update ({
         'school': school,
         'access_keys': access_keys,
-    }
+    })
     return render(request, 'users/school_dashboard.html', context)
 
         
@@ -50,14 +53,18 @@ def admin_dashboard_view(request):
     if not request.user.is_admin:
         return redirect('access_denied')
 
-    # access_keys = school.access_keys.all()
+    if not request.user.first_name or not request.user.last_name or not request.user.staff_id:
+        messages.error(request, 'Please complete your profile to access the admin dashboard.')
+        return redirect('complete_profile')
+
     access_keys = AccessKey.objects.order_by('-procurement_date')
     key_logs = KeyLog.objects.order_by('-timestamp')
     
-    context = {
+    context = common_context_data(request)
+    context.update ({
         'access_keys': access_keys,
         'key_logs': key_logs,    
-    }
+    })
     return render(request, 'users/admin_dashboard.html', context)
 
 
@@ -129,7 +136,7 @@ def login_view(request):
             auth_login(request, user)
             messages.success(request, 'Login successful.')
             if user.is_admin:
-                return redirect('admin_dashboard')
+                return redirect('home')
             else:
                 return redirect('home')
             
@@ -154,10 +161,11 @@ def profile_view(request):
     if school:
         active_key = school.access_keys.filter(status='active').first()
 
-    context = {
+    context = common_context_data(request)
+    context.update ({
         'user': user,
         'active_key': active_key,
-    }
+    })
     return render(request, 'accounts/profile.html', context)
 
 
@@ -168,9 +176,11 @@ def billing_information_view(request):
         billing_info = BillingInformation.objects.get(user=user)
     except BillingInformation.DoesNotExist:
         return redirect('confirm_billing_info') 
-    context = {
+    
+    context = common_context_data(request)
+    context.update ({
         'billing_info': billing_info,
-    }
+    })
     return render(request, 'accounts/billing_information.html', context)
 
 
@@ -189,8 +199,12 @@ def profile_complete_view(request):
 
     else:
         form = ProfileForm(instance=user)
-        if user.is_admin or user.school:
+        if user.is_admin:
             form.fields.pop('school', None)
+        else:
+            if user.school:
+                form.fields.pop('school', None)
+            form.fields.pop('staff_id', None)
 
     context = {
         'form': form
@@ -217,16 +231,31 @@ def confirm_billing_information_view(request):
         form = BillingInformationForm(instance=billing_info)
         form.fields['email'].initial = request.user.email
         
-
-    context = {
+    context = common_context_data(request)
+    context.update ({
         'form': form,
-    }
+    })
     return render(request, 'accounts/confirm_billing_info.html', context)
 
 
 @login_required
 def update_billing_information_view(request):
-    return confirm_billing_information_view(request)
+    billing_info = getattr(request.user, 'billing_information', None)
+
+    if request.method == 'POST':
+        form = UpdateBillingInformationForm(request.POST, instance=billing_info)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Billing information updated successfully.')
+            return redirect('billing_information')
+    else:
+        form = UpdateBillingInformationForm(instance=billing_info)
+
+    context = common_context_data(request)
+    context.update ({
+        'form': form,
+    })
+    return render(request, 'accounts/update_billing_info.html', context)
 
 
 @login_required
@@ -242,9 +271,10 @@ def update_profile_view(request):
     else:
         profile_form = ProfileUpdateForm(instance=request.user)
 
-    context = {
+    context = common_context_data(request)
+    context.update ({
         'profile_form': profile_form,
-    }
+    })
     return render(request, 'accounts/update_profile.html', context)
 
 
