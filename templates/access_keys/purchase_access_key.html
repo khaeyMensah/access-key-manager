@@ -5,20 +5,12 @@
 {% block content %}
   <h2 class="text-center">Purchase Access Key</h2>
 
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
   <div class="row justify-content-center">
     <div class="col-lg-6 col-md-8 col-sm-10">
       <div class="card">
         <div class="card-body">
-          <div class="bg-info">
-            <p>Fixed price for access key: GH¢: {{ access_key_price }}</p>
+          <div class="alert alert-info">
+            <p>Fixed price for access key: <strong>GH¢: {{ access_key_price }}</strong></p>
             <p>Please provide your payment details to Purchase an Access Key</p>
           </div>
           <form method="post" novalidate>

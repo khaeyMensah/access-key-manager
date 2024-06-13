@@ -8,9 +8,14 @@
 
 {% block body %}
   <div class="container">
-    <h1 class="text-center logo my-4">
-      <a href="{% url 'home' %}">Access Key Manager</a>
-    </h1>
+    <div class="auth-logo">
+      <h1 class="text-center my-2">
+        <a href="{% url 'home' %}">Access Key Manager</a>
+      </h1>
+      <div class="app-logo">
+        <img src="{% static "img/akm-logo.png" %}" alt="AKM logo">
+      </div>
+    </div>
 
     <div class="container-fluid">
       {% block content %}

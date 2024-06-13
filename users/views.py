@@ -72,24 +72,6 @@ def registration_options_view(request):
     return render(request, 'accounts/register_options.html')
 
 
-def send_verification_email(request, user):
-    current_site = get_current_site(request)
-    mail_subject = 'Activate your account.'
-    message = render_to_string('authentication/acc_active_email.html', {
-        'user': user,
-        'domain': current_site.domain,
-        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-        'token': account_activation_token.make_token(user),
-    })
-    to_email = user.email
-    send_mail(
-        mail_subject,
-        message,
-        'ekmpizarro@gmail.com',
-        [to_email],
-    )
-
-
 def register_view(request, user_type):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -109,6 +91,24 @@ def register_view(request, user_type):
         form = RegistrationForm()
         
     return render(request, 'accounts/register.html', {'form': form})
+
+
+def send_verification_email(request, user):
+    current_site = get_current_site(request)
+    mail_subject = 'Activate your account.'
+    message = render_to_string('authentication/acc_active_email.html', {
+        'user': user,
+        'domain': current_site.domain,
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        'token': account_activation_token.make_token(user),
+    })
+    to_email = user.email
+    send_mail(
+        mail_subject,
+        message,
+        'ekmpizarro@gmail.com',
+        [to_email],
+    )
 
 
 def activate(request, uidb64, token):

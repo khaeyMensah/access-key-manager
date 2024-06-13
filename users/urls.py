@@ -16,6 +16,7 @@ urlpatterns = [
     path('activate/<uidb64>/<token>/', views.activate, name='activate'),
     path('registration_pending/', TemplateView.as_view(template_name='authentication/registration_pending.html'), name='registration_pending'),
     path('activation_success/', TemplateView.as_view(template_name='authentication/activation_success.html'), name='activation_success'),
+    path('activation_invalid/', TemplateView.as_view(template_name='authentication/activation_invalid.html'), name='activation_invalid'),
 
     path('login/', users_views.login_view, name='login'),
     path('logout/', users_views.logout_view, name='logout'),

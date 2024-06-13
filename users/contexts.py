@@ -1,25 +1,15 @@
 from access_keys.models import AccessKey
 from users.models import School
-
+from django.db.models import Count
 
 def common_context_data(request):
-    total_schools =  0
-    total_active_keys =  0
-    total_revoked_keys =  0
-    total_expired_keys =  0
-    active_key =  None
-    expired_keys_count =  0
-    revoked_keys_count =  0
-    keys_purchased_count = 0
-
-    
-    total_schools = School.objects.count()
+    total_registered_schools = School.objects.annotate(user_count=Count('users')).filter(user_count__gt=0).count()
     total_active_keys = AccessKey.objects.filter(status='active').count()
     total_revoked_keys = AccessKey.objects.filter(status='revoked').count()
     total_expired_keys = AccessKey.objects.filter(status='expired').count()
     
     context = {
-        'total_schools': total_schools,
+        'total_registered_schools': total_registered_schools,  # Note the updated context variable name
         'total_active_keys': total_active_keys,
         'total_revoked_keys': total_revoked_keys,
         'total_expired_keys': total_expired_keys,
@@ -41,4 +31,5 @@ def common_context_data(request):
         })
             
     return context
+
             
