@@ -1,34 +1,47 @@
-from django.test import TestCase
+from django.utils import timezone
+from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from users.models import School, BillingInformation
-from django.contrib.auth import get_user
+from django.core import mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from users.tokens import account_activation_token
+from access_keys.models import School
+from users.models import BillingInformation, User
 
 User = get_user_model()
 
-class UserViewsTests(TestCase):
+class UserViewTests(TestCase):
+
     def setUp(self):
+        self.client = Client()
         self.school = School.objects.create(name='Test School')
-        self.admin_user = self._create_user(
-            username='admin',
+        
+        self.admin_user = User.objects.create_user(
+            username='adminuser',
             email='admin@example.com',
-            password='adminpassword',
-            is_admin=True
+            password='password123',
+            is_admin=True,
+            first_name='Admin',
+            last_name='User',
+            staff_id='A001'
         )
-        self.school_user = self._create_user(
-            username='school_user',
+        
+        self.school_personnel_user = User.objects.create_user(
+            username='schooluser',
             email='school@example.com',
-            password='schoolpassword',
+            password='password123',
             is_school_personnel=True,
+            first_name='School',
+            last_name='User',
             school=self.school
         )
-
-    def _create_user(self, username, email, password, **extra_fields):
-        return User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            **extra_fields
+        
+        self.inactive_user = User.objects.create_user(
+            username='inactiveuser',
+            email='inactive@example.com',
+            password='password123',
+            is_active=False
         )
 
     def test_home_view(self):
@@ -37,78 +50,176 @@ class UserViewsTests(TestCase):
         self.assertTemplateUsed(response, 'users/home.html')
 
     def test_school_dashboard_view(self):
-        self._login_user(email='school@example.com', password='schoolpassword')
+        self.client.login(username='schooluser', password='password123')
         response = self.client.get(reverse('school_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/school_dashboard.html')
 
     def test_admin_dashboard_view(self):
-        self._login_user(email='admin@example.com', password='adminpassword')
+        self.client.login(username='adminuser', password='password123')
         response = self.client.get(reverse('admin_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/admin_dashboard.html')
 
-    def test_registration_view(self):
+
+    def test_registration_options_view(self):
         response = self.client.get(reverse('register_options'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'accounts/register_options.html')
 
     def test_register_school_personnel_view(self):
+        response = self.client.get(reverse('register_school_personnel'))
+        self.assertEqual(response.status_code, 200) 
+        self.assertTemplateUsed(response, 'accounts/register.html')
+
+        initial_user_count = User.objects.count()
+        
         response = self.client.post(reverse('register_school_personnel'), {
-            'username': 'newschooluser',
-            'email': 'newschooluser@example.com',
-            'password1': 'complexpassword123',
-            'password2': 'complexpassword123'
+            'username': 'newuser',
+            'email': 'newuser@example.com',
+            'password1': 'A_strong_password123!',
+            'password2': 'A_strong_password123!'
         })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful registration
-        self.assertTrue(User.objects.filter(email='newschooluser@example.com').exists())
+        self.assertEqual(response.status_code, 302) 
+        self.assertRedirects(response, reverse('registration_pending'))
+        
+        user_count = User.objects.count()
+        
+        self.assertEqual(user_count, initial_user_count + 1)
+        # self.assertEqual(User.objects.count(), 4) 
+        self.assertFalse(User.objects.get(username='newuser').is_active)
+        self.assertEqual(len(mail.outbox), 1)
+
+
+    def test_register_admin_view(self):
+        response = self.client.get(reverse('register_admin'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/register.html')
+
+        initial_user_count = User.objects.count()
+
+        response = self.client.post(reverse('register_admin'), {
+            'username': 'newadmin',
+            'email': 'newadmin@example.com',
+            'password1': 'A_strong_password123!',
+            'password2': 'A_strong_password123!'
+        })
+        self.assertEqual(response.status_code, 302)
+
+        user_count = User.objects.count()
+
+        self.assertEqual(user_count, initial_user_count + 1)
+        self.assertTrue(User.objects.filter(username='newadmin').exists())
+        self.assertRedirects(response, reverse('registration_pending'))
+        self.assertFalse(User.objects.get(username='newadmin').is_active)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def tearDown(self):
+        User.objects.all().delete()
+
+    def test_activate_view(self):
+        uid = urlsafe_base64_encode(force_bytes(self.inactive_user.pk))
+        token = account_activation_token.make_token(self.inactive_user)
+        activation_url = reverse('activate', kwargs={'uidb64': uid, 'token': token})
+        
+        response = self.client.get(activation_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('activation_success'))
+        self.inactive_user.refresh_from_db()
+        self.assertTrue(self.inactive_user.is_active)
 
     def test_login_view(self):
+        response = self.client.get(reverse('login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/login.html')
+
         response = self.client.post(reverse('login'), {
-            'username': 'school_user',
-            'password': 'schoolpassword'
+            'username': 'adminuser',
+            'password': 'password123'
         })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful login
-        user = get_user(self.client)
-        self.assertTrue(user.is_authenticated)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('home'))
 
     def test_logout_view(self):
-        self._login_user(email='school@example.com', password='schoolpassword')
+        self.client.login(username='adminuser', password='password123')
         response = self.client.get(reverse('logout'))
-        self.assertEqual(response.status_code, 302)  # Redirect after logout
-        user = get_user(self.client)
-        self.assertFalse(user.is_authenticated)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('home'))
 
     def test_profile_view(self):
-        self._login_user(email='school@example.com', password='schoolpassword')
+        self.client.login(username='schooluser', password='password123')
         response = self.client.get(reverse('profile'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'accounts/profile.html')
+        self.assertTemplateUsed(response, 'users/profile.html')
 
     def test_billing_information_view(self):
         billing_info = BillingInformation.objects.create(
-            user=self.school_user,
-            payment_method='Card',
-            card_number='1234567890123456',
-            card_expiry='2024-12-31',
+            user=self.school_personnel_user, 
+            payment_method='Card', 
+            card_number='1234567890123456', 
+            card_expiry=timezone.now().date(), 
             card_cvv='123'
         )
-        self._login_user(email='school@example.com', password='schoolpassword')
+        self.client.login(username='schooluser', password='password123')
         response = self.client.get(reverse('billing_information'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'accounts/billing_information.html')
+        self.assertTemplateUsed(response, 'users/billing_information.html')
+        self.assertContains(response, '**** **** **** 3456')
 
-    def test_confirm_billing_information_view(self):
-        url = reverse('confirm_billing_info')
-        data = {
-            'email': 'billing@example.com',
+        
+    def test_profile_complete_view(self):
+        self.client.login(username='schooluser', password='password123')
+        response = self.client.get(reverse('complete_profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/complete_profile.html')
+
+        response = self.client.post(reverse('complete_profile'), {
+            'first_name': 'Updated',
+            'last_name': 'User',
+            'email': 'updated@example.com',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('home'))
+        self.school_personnel_user.refresh_from_db()
+        self.assertEqual(self.school_personnel_user.first_name, 'Updated')
+
+
+    def test_update_billing_information_view(self):
+        billing_info = BillingInformation.objects.create(
+            user=self.school_personnel_user, 
+            payment_method='MTN', 
+            mobile_money_number='1234567890'
+        )
+        self.client.login(username='schooluser', password='password123')
+        response = self.client.post(reverse('update_billing_info'), {
             'payment_method': 'Card',
-            'card_number': '1234567812345678',
-            'card_expiry': '2024-12-31',
-            'card_cvv': '123'
-        }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 302)  
+            'card_number': '1234567890123456',
+            'card_expiry': '2023-12-31',
+            'card_cvv': '123',
+        })
+        self.assertEqual(response.status_code, 302)
+        billing_info.refresh_from_db()
+        self.assertEqual(billing_info.payment_method, 'Card')
+        self.assertEqual(billing_info.card_number, '1234567890123456')
+        self.assertEqual(billing_info.card_expiry, timezone.datetime(2023, 12, 31).date())
+        self.assertEqual(billing_info.card_cvv, '123')
 
-    def _login_user(self, email, password):
-        self.client.login(email=email, password=password)
+            
+    def test_update_profile_view(self):
+        self.client.login(username='schooluser', password='password123')
+        
+        response = self.client.get(reverse('update_profile'))
+        self.assertEqual(response.status_code, 200) 
+        self.assertTemplateUsed(response, 'users/update_profile.html')
+
+        response = self.client.post(reverse('update_profile'), {
+            'username': 'schooluser', 
+            'first_name': 'New',
+            'last_name': 'Name',
+            'email': 'newname@example.com'
+        })
+        self.assertEqual(response.status_code, 302) 
+        self.assertRedirects(response, reverse('profile'))
+        self.school_personnel_user.refresh_from_db()
+        self.assertEqual(self.school_personnel_user.first_name, 'New')
+        self.assertEqual(self.school_personnel_user.email, 'newname@example.com')

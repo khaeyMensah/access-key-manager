@@ -46,7 +46,7 @@
                                 {% if not user.school and user.is_school_personnel %}
                                     <li><a class="dropdown-item" href="{% url 'complete_profile' %}">Complete Profile</a></li>
                                 {% else %}
-                                    <li><a class="dropdown-item" href="{% url 'profile' %}">My Profile</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
                                 {% endif %}
                                 {% if user.is_school_personnel %}
                                 <li><a class="dropdown-item" href="{% url 'access_keys:purchase_access_key' %}">Purchase Key</a></li>

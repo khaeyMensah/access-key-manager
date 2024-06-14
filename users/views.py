@@ -2,7 +2,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.contrib.auth.tokens import default_token_generator
 from django.template.loader import render_to_string
 from .tokens import account_activation_token
 
@@ -12,7 +11,7 @@ from django.contrib.auth import login as auth_login, logout
 from access_keys.models import AccessKey, KeyLog, School
 from django.contrib import messages
 from users.models import BillingInformation, User
-from users.forms import BillingInformationForm, ProfileUpdateForm, RegistrationForm, LoginForm, ProfileForm, UpdateBillingInformationForm
+from users.forms import ProfileUpdateForm, RegistrationForm, LoginForm, ProfileForm, UpdateBillingInformationForm
 from users.contexts import common_context_data
 
 
@@ -80,16 +79,14 @@ def register_view(request, user_type):
             user.is_active = False
             if user_type == 'school_personnel':
                 user.is_school_personnel = True
-                messages.success(request, 'School personnel registration successful. Please confirm your email address to complete the registration.')
             elif user_type == 'admin':
                 user.is_admin = True
-                messages.success(request, 'Admin registration successful. Please confirm your email address to complete the registration.')
             user.save()
             send_verification_email(request, user)
+            messages.success(request, f'{user_type} registration successful. Please confirm your email.')
             return redirect('registration_pending')
     else:
         form = RegistrationForm()
-        
     return render(request, 'accounts/register.html', {'form': form})
 
 
@@ -103,12 +100,7 @@ def send_verification_email(request, user):
         'token': account_activation_token.make_token(user),
     })
     to_email = user.email
-    send_mail(
-        mail_subject,
-        message,
-        'ekmpizarro@gmail.com',
-        [to_email],
-    )
+    send_mail(mail_subject, message, 'ekmpizarro@gmail.com', [to_email])
 
 
 def activate(request, uidb64, token):
@@ -135,11 +127,9 @@ def login_view(request):
             user = form.get_user()
             auth_login(request, user)
             messages.success(request, 'Login successful.')
-            if user.is_admin:
-                return redirect('home')
-            else:
-                return redirect('home')
-            
+            return redirect('home')
+        else:
+            messages.error(request, 'Login failed. Please check your credentials.')
     else:
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})
@@ -166,7 +156,7 @@ def profile_view(request):
         'user': user,
         'active_key': active_key,
     })
-    return render(request, 'accounts/profile.html', context)
+    return render(request, 'users/profile.html', context)
 
 
 @login_required
@@ -181,7 +171,7 @@ def billing_information_view(request):
     context.update ({
         'billing_info': billing_info,
     })
-    return render(request, 'accounts/billing_information.html', context)
+    return render(request, 'users/billing_information.html', context)
 
 
 @login_required
@@ -209,53 +199,27 @@ def profile_complete_view(request):
     context = {
         'form': form
     }
-    return render(request, 'accounts/complete_profile.html', context)
-
-
-@login_required
-def confirm_billing_information_view(request):
-    try:
-        billing_info = request.user.billing_information
-    except BillingInformation.DoesNotExist:
-        billing_info = None
-
-    if request.method == 'POST':
-        form = BillingInformationForm(request.POST, instance=billing_info)
-        if form.is_valid():
-            billing_info = form.save(commit=False)
-            billing_info.user = request.user
-            billing_info.save()
-            messages.success(request, 'Billing information updated successfully.')
-            return redirect('school_dashboard')
-    else:
-        form = BillingInformationForm(instance=billing_info)
-        form.fields['email'].initial = request.user.email
-        
-    context = common_context_data(request)
-    context.update ({
-        'form': form,
-    })
-    return render(request, 'accounts/confirm_billing_info.html', context)
+    return render(request, 'users/complete_profile.html', context)
 
 
 @login_required
 def update_billing_information_view(request):
-    billing_info = getattr(request.user, 'billing_information', None)
+    billing_information, created = BillingInformation.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
-        form = UpdateBillingInformationForm(request.POST, instance=billing_info)
+        form = UpdateBillingInformationForm(request.POST, instance=billing_information)
         if form.is_valid():
             form.save()
             messages.success(request, 'Billing information updated successfully.')
-            return redirect('billing_information')
+            return redirect('profile')
     else:
-        form = UpdateBillingInformationForm(instance=billing_info)
+        form = UpdateBillingInformationForm(instance=billing_information)
 
     context = common_context_data(request)
     context.update ({
         'form': form,
     })
-    return render(request, 'accounts/update_billing_info.html', context)
+    return render(request, 'users/update_billing_info.html', context)
 
 
 @login_required
@@ -275,6 +239,4 @@ def update_profile_view(request):
     context.update ({
         'profile_form': profile_form,
     })
-    return render(request, 'accounts/update_profile.html', context)
-
-
+    return render(request, 'users/update_profile.html', context)

@@ -103,7 +103,6 @@ class KeyLogModelTest(TestCase):
         )
 
 
-
     def test_key_log_user_assignment(self):
         access_key = AccessKey.objects.create(
             key='test_key5',
