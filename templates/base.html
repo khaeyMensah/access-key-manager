@@ -1,4 +1,7 @@
 {% load static %}
+
+{% include 'messages.html' %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -183,37 +186,9 @@
         </div>
     </footer>
 
-      <!-- Messages Modal -->
-      {% if messages %}
-      <!-- Trigger the modal with a button (hidden button to automatically open the modal) -->
-      <button type="button" id="messageModalButton" class="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#messageModal">
-        Open modal
-      </button>
-
-      <!-- Modal -->
-      <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="messageModalLabel">Messages</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-              {% endfor %}
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    {% endif %}
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="{% static 'js/app.js' %}"></script>
-    
+    <script src="{% static 'js/messages.js' %}"></script>
     {% block script %}{% endblock %}
     
     {% endblock body %}

@@ -83,7 +83,7 @@ def register_view(request, user_type):
                 user.is_admin = True
             user.save()
             send_verification_email(request, user)
-            messages.success(request, f'{user_type} registration successful. Please confirm your email.')
+            messages.success(request, 'Registration successful. Please confirm your email.')
             return redirect('registration_pending')
     else:
         form = RegistrationForm()
