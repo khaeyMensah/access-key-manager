@@ -1,0 +1,60 @@
+/* Dark background for table header */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.table thead th {
+  background-color: #343a40;
+  color: #fff;
+}
+
+/* Rounded corners for top row in table body on hover */
+.table-hover tbody tr:hover {
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+/* Transition effect for table rows */
+.table-hover tbody tr {
+  transition: all 0.3s ease;
+}
+
+/* Rounded corners for top left and top right of table header */
+.table thead th:first-child {
+  border-top-left-radius: 10px;
+}
+
+.table thead th:last-child {
+  border-top-right-radius: 10px;
+}
+
+#key-log {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.5s ease;
+}
+
+#key-log-heading {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.5s ease;
+}
+
+/* Media query for smaller screens for tables*/
+@media (max-width: 768px) {
+  .table {
+    font-size: 14px; /* Reduce font size */
+  }
+
+  .table th,
+  .table td {
+    padding: 8px;
+  }
+}

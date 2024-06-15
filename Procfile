@@ -1,1 +1,1 @@
-web: gunicorn access-key-manager.wsgi --log-file -
+web: gunicorn access_key_manager.wsgi

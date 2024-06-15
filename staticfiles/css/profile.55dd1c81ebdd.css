@@ -1,0 +1,31 @@
+#profile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.profile-item {
+  width: 100%;
+}
+
+.profile-item:last-child {
+  margin-top: 40px;
+}
+
+@media (min-width: 992px) {
+  #profile {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .profile-item {
+    width: 45%;
+  }
+
+  .profile-item:last-child {
+    margin: 0;
+  }
+}
