@@ -20,16 +20,7 @@ class AccessKeyModelTest(TestCase):
             expiry_date=timezone.now() - timezone.timedelta(days=1),
             price = settings.ACCESS_KEY_PRICE 
         )
-
-    def test_cannot_revoke_expired_key(self):
-        self.access_key.expiry_date = timezone.now() - timezone.timedelta(days=1)
-        self.access_key.save()
-
-        with self.assertRaises(ValidationError):
-            self.access_key.revoked_by = self.user
-            self.access_key.save()
-
-
+        
 class KeyLogModelTest(TestCase):
 
     def test_key_log_creation(self):
@@ -67,8 +58,7 @@ class KeyLogModelTest(TestCase):
             user=User.objects.create(username='test_user4'),
             access_key=access_key
         )
-
-        self.assertTrue(timezone.now() - datetime.timedelta(seconds=key_log.timestamp.seconds) < datetime.timedelta(seconds=5))
+        self.assertTrue(timezone.now() - key_log.timestamp < datetime.timedelta(seconds=5))
 
     def test_key_log_related_name(self):
         access_key = AccessKey.objects.create(

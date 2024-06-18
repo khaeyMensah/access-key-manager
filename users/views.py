@@ -8,6 +8,7 @@ from .tokens import account_activation_token
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, logout
+from users.helpers import is_school_personnel, is_admin
 from access_keys.models import AccessKey, KeyLog, School
 from django.contrib import messages
 from users.models import BillingInformation, User
@@ -22,7 +23,7 @@ def home(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_school_personnel)
+@user_passes_test(is_school_personnel)
 def school_dashboard_view(request):
     if not request.user.is_school_personnel:
         return redirect('access_denied')
@@ -47,7 +48,7 @@ def school_dashboard_view(request):
         
         
 @login_required
-@user_passes_test(lambda u: u.is_admin)
+@user_passes_test(is_admin)
 def admin_dashboard_view(request):
     if not request.user.is_admin:
         return redirect('access_denied')
@@ -165,7 +166,7 @@ def billing_information_view(request):
     try:
         billing_info = BillingInformation.objects.get(user=user)
     except BillingInformation.DoesNotExist:
-        return redirect('confirm_billing_info') 
+        return redirect('update_billing_info') 
     
     context = common_context_data(request)
     context.update ({

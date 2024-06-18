@@ -11,8 +11,8 @@ class RegistrationFormTest(TestCase):
         form_data = {
             'username': 'testuser',
             'email': 'testuser@example.com',
-            'password1': 'testpassword',
-            'password2': 'testpassword',
+            'password1': 'testpassword123',
+            'password2': 'testpassword123',
         }
         form = RegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())
@@ -21,8 +21,8 @@ class RegistrationFormTest(TestCase):
         form_data = {
             'username': 'testuser',
             'email': 'invalid-email',
-            'password1': 'testpassword',
-            'password2': 'testpassword',
+            'password1': 'testpassword123',
+            'password2': 'testpassword123',
         }
         form = RegistrationForm(data=form_data)
         self.assertFalse(form.is_valid())
@@ -57,7 +57,7 @@ class ProfileFormTest(TestCase):
 class ProfileUpdateFormTest(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', email='testuser@example.com', password='testpassword')
+        self.user = User.objects.create_user(username='testuser', email='testuser@example.com', password='testpassword123')
 
     def test_profile_update_form_valid(self):
         form_data = {
@@ -83,25 +83,57 @@ class ProfileUpdateFormTest(TestCase):
 class BillingInformationFormTest(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', email='testuser@example.com', password='testpassword')
+        self.user = User.objects.create_user(username='testuser', email='testuser@example.com', password='testpassword123')
 
-    def test_billing_information_form_valid(self):
+    def test_billing_information_form_valid_mtn(self):
         form_data = {
-            'email': 'testuser@example.com',
             'payment_method': 'MTN',
-            'mobile_money_number': '1234567890'
+            'mobile_money_number': '1234567890',
+            'confirm_purchase': True
         }
         form = BillingInformationForm(data=form_data)
         self.assertTrue(form.is_valid())
 
-    def test_billing_information_form_invalid(self):
+    def test_billing_information_form_invalid_mtn(self):
         form_data = {
-            'email': '',
-            'payment_method': 'Card',
-            'card_number': '1234567890123456',
-            'card_expiry': '2025-12-31',
-            'card_cvv': '123'
+            'payment_method': 'MTN',
+            'confirm_purchase': True
         }
         form = BillingInformationForm(data=form_data)
         self.assertFalse(form.is_valid())
-        self.assertIn('email', form.errors)
+        self.assertIn('mobile_money_number', form.errors)
+
+    def test_billing_information_form_valid_card(self):
+        form_data = {
+            'payment_method': 'Card',
+            'card_number': '1234567890123456',
+            'card_expiry': '2025-12-31',
+            'card_cvv': '123',
+            'confirm_purchase': True
+        }
+        form = BillingInformationForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_billing_information_form_invalid_card(self):
+        form_data = {
+            'payment_method': 'Card',
+            'confirm_purchase': True
+        }
+        form = BillingInformationForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('card_number', form.errors)
+        self.assertIn('card_expiry', form.errors)
+        self.assertIn('card_cvv', form.errors)
+
+    def test_billing_information_form_invalid_mixed(self):
+        form_data = {
+            'payment_method': 'MTN',
+            'mobile_money_number': '1234567890',
+            'card_number': '1234567890123456',
+            'card_expiry': '2025-12-31',
+            'card_cvv': '123',
+            'confirm_purchase': True
+        }
+        form = BillingInformationForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('__all__', form.errors)  # Check if non-field error is raised

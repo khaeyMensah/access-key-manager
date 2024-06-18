@@ -25,7 +25,7 @@ urlpatterns = [
     path('profile/complete/', users_views.profile_complete_view, name='complete_profile'),
     path('profile/update/', users_views.update_profile_view, name='update_profile'),
     path('profile/billing-info/', users_views.billing_information_view, name='billing_information'),
-    path('profile/billing-info/update', users_views.update_billing_information_view, name='update_billing_info'),
+    path('profile/billing-info/update/', users_views.update_billing_information_view, name='update_billing_info'),
 
     # Password Reset URLs
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='authentication/password_reset_form.html'), name='password_reset'),

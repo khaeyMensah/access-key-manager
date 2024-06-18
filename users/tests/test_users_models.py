@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from users.models import School, BillingInformation
 
 User = get_user_model()
@@ -90,6 +91,8 @@ class BillingInformationTests(TestCase):
         self.assertEqual(billing_info.user, self.user)
         self.assertEqual(billing_info.payment_method, 'Card')
         self.assertEqual(billing_info.card_number, '1234567890123456')
+        self.assertEqual(billing_info.card_expiry, '2024-12-31')
+        self.assertEqual(billing_info.card_cvv, '123')
 
     def test_create_billing_information_momo(self):
         billing_info = BillingInformation.objects.create(
@@ -100,3 +103,27 @@ class BillingInformationTests(TestCase):
         self.assertEqual(billing_info.user, self.user)
         self.assertEqual(billing_info.payment_method, 'MTN')
         self.assertEqual(billing_info.mobile_money_number, '0241234567')
+
+    def test_billing_information_invalid_card(self):
+        billing_info = BillingInformation(
+            user=self.user,
+            payment_method='Card'
+        )
+        with self.assertRaises(ValidationError):
+            billing_info.full_clean()
+
+    def test_billing_information_invalid_momo(self):
+        billing_info = BillingInformation(
+            user=self.user,
+            payment_method='MTN'
+        )
+        with self.assertRaises(ValidationError):
+            billing_info.full_clean()
+
+    def test_billing_information_str(self):
+        billing_info = BillingInformation.objects.create(
+            user=self.user,
+            payment_method='MTN',
+            mobile_money_number='0241234567'
+        )
+        self.assertEqual(str(billing_info), 'test@example.com - MTN Mobile Money')

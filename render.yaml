@@ -7,3 +7,6 @@ services:
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: access_key_manager.settings
+    postdeploy:
+      - python manage.py migrate
+      - python manage.py assign_permissions

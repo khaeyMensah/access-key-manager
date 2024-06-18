@@ -17,6 +17,7 @@ class RegistrationForm(UserCreationForm):
             user.save()
         return user
 
+
 class LoginForm(AuthenticationForm):
     class Meta:
         model = User
@@ -39,10 +40,12 @@ class ProfileForm(forms.ModelForm):
             self.add_error('email', 'Please provide an email address.')
         return cleaned_data
 
+
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name']
+
 
 class BillingInformationForm(forms.ModelForm):
     card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
@@ -77,6 +80,7 @@ class BillingInformationForm(forms.ModelForm):
                 self.add_error(None, 'Credit card details are not required for MOMO payment.')
 
         return cleaned_data
+
 
 class UpdateBillingInformationForm(forms.ModelForm):
     card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)

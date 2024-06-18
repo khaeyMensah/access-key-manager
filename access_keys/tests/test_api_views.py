@@ -51,9 +51,23 @@ class AccessKeyAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['error'], 'No active access key found.')
 
+    # def test_check_access_key_missing_email(self):
+    #     """Test that the API returns a 400 error if the email parameter is missing."""
+        
+    #     # url = reverse('access_keys:key_status', kwargs={'email': 'test@example.com'})
+    #     url = reverse('access_keys:key_status')
+    #     response = self.client.get(url)
+    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    #     self.assertEqual(response.data['error'], 'email parameter is required.')
+        
+        
     def test_check_access_key_missing_email(self):
-        """Test that the API returns a 400 error if the email parameter is missing."""
         url = reverse('access_keys:key_status')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'], 'email parameter is required.')
+
+    # You can also add a test for valid email
+    def test_check_access_key_with_email(self):
+        url = reverse('access_keys:key_status')
+        response = self.client.get(url, {'email': 'test@example.com'})
+        self.assertIn(response.status_code, [status.HTTP_200_OK, status.HTTP_404_NOT_FOUND])

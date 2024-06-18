@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 from users.models import School, User
@@ -25,7 +26,7 @@ class AccessKey(models.Model):
     revoked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='revoked_access_keys')
     revoked_on = models.DateTimeField(null=True, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
-
+        
     def __str__(self):
         return f"{self.key} - {self.school.name} - {self.status}"
 

@@ -1,6 +1,6 @@
 import random
 from django.conf import settings
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.utils import timezone
@@ -8,13 +8,15 @@ from django.utils import timezone
 from access_keys.models import AccessKey, KeyLog
 from users.contexts import common_context_data
 from users.forms import BillingInformationForm
+from users.helpers import is_admin, is_school_personnel
 from users.models import School
 from .utils import generate_access_key
 
 
 # Create your views here.
 @login_required
-@user_passes_test(lambda u: u.is_school_personnel)
+@user_passes_test(is_school_personnel)
+@permission_required('users.can_purchase_access_key', raise_exception=True)
 def purchase_access_key_view(request):
     school = get_object_or_404(School, users=request.user)
     active_keys = school.access_keys.filter(status='active')
@@ -77,7 +79,8 @@ def purchase_access_key_view(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_admin)
+@user_passes_test(is_admin)
+@permission_required('users.can_revoke_access_key', raise_exception=True)
 def revoke_access_key_view(request, key_id):
     access_key = get_object_or_404(AccessKey, id=key_id)
     if request.method == 'POST':
@@ -102,21 +105,13 @@ def revoke_access_key_view(request, key_id):
     
 
 def mock_payment_process(billing_info):
-    """
-    Mock payment processing function.
-    Simulates a successful or failed payment based on a random boolean value.
-    """
     payment_method = billing_info.payment_method
 
-    # Simulate different payment scenarios based on the payment method
     if payment_method == "Card":
-        # Simulate a successful payment for card payments 80% of the time
         payment_successful = random.random() < 0.8
     elif payment_method == "MTN":
-        # Simulate a successful payment for mobile money payments 90% of the time
         payment_successful = random.random() < 0.9
     else:
-        # For any other payment method, simulate a failed payment
         payment_successful = False
 
     return payment_successful

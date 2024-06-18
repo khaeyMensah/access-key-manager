@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home_styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/table_styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
     <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
@@ -27,10 +28,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'home' %}">
                 <img src="{% static "img/akm-logo.png" %}" alt="AKM logo">
-                <span class="home">
-                    <div class="ak">Access Key </div>
-                    <div class="m">Manager</div>
-                </span>
+                <span class="home">Access Key Manager</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -40,10 +38,10 @@
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="username ms-2">{{ user.get_full_name }}</span>
                                 <div class="user-icon d-none d-lg-flex justify-content-center align-items-center bg-secondary">
-                                    {{ user.first_name|slice:":1"|upper }}
+                                    <img src="{% static "img/user_avatar.png" %}" alt="user-avatar">
                                 </div>
-                                <span class="username ms-2">{{ user.username }}</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end bg-light" aria-labelledby="navbarDropdown">
                                 {% if not user.school and user.is_school_personnel %}
@@ -54,7 +52,7 @@
                                 {% if user.is_school_personnel %}
                                 <li><a class="dropdown-item" href="{% url 'access_keys:purchase_access_key' %}">Purchase Key</a></li>
                                 {% endif %}
-                                {% comment %} <li><hr class="dropdown-divider"></li> {% endcomment %}
+                                <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{% url 'logout' %}">
                                         {% csrf_token %}
@@ -79,8 +77,8 @@
     <div class="container-fluid mt-4" id="main-container">
         <div class="row">
             <!-- Sidebar -->
+            {% block sidebar %}
             <div class="col-12 col-lg-3 d-none d-lg-block bg-light" id="sidebar">
-                {% block sidebar %}
 
                 <!-- Card 1 -->
                 <div class="card">
@@ -146,17 +144,22 @@
                     <p><small>To use Access Key Manager, log in or register. You can view and manage your access keys once logged in.</small></p>
                     {% endif %}
                 </div>
-                {% endblock %}
             </div>
+            {% endblock %}
+
     
             <!-- Main content -->
             <div class="container col-12 col-lg-9" id="main-content">
                 {% block content %}{% endblock %}
             </div>
+            <div class="container col-12 col-lg-12" id="home-content">
+                {% block home_content %}{% endblock %}
+            </div>
         </div>
     </div>
     
     <!-- Footer -->
+    {% block footer %}
     <footer class="bg-light text-center text-lg-start mt-4" id="footer">
         <div class="container p-4">
             <div class="row">
@@ -174,17 +177,19 @@
                                 <li>Phone: +233 55 524 4922</li>
                             </ul>
                         </small>
-
                     </div>
                 </div>
             </div>
         </div>
-        <div class="text-center p-3 bg-secondary text-white">
+        <hr>
+        <div class="text-center p-3 bg-light">
             <small>
                 &copy; 2024 Access Key Manager. All rights reserved.
             </small>
         </div>
     </footer>
+    {% endblock %}
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="{% static 'js/app.js' %}"></script>
