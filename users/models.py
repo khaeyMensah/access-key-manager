@@ -7,12 +7,28 @@ class User(AbstractUser):
     is_admin = models.BooleanField(default=False)
     school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True, related_name='users')
     staff_id = models.CharField(max_length=50, blank=True, null=True)
+    profile_completed = models.BooleanField(default=False)
     
     class Meta:
         permissions = [
             ("can_purchase_access_key", "Can purchase access key"),
             ("can_revoke_access_key", "Can revoke access key"),
         ]
+    
+    def clean(self):
+        if self.pk and self.profile_completed and User.objects.filter(pk=self.pk, is_school_personnel=True, school__isnull=False).exists():
+            old_school = User.objects.get(pk=self.pk).school
+            if old_school != self.school:
+                raise ValidationError("School personnel cannot change their school after submitting their profile.")
+    
+    def is_profile_complete(self):
+        return bool(self.first_name and self.last_name and self.email and (self.is_admin or (self.is_school_personnel and self.school)))
+    
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+        
     
 class School(models.Model):
     name = models.CharField(max_length=255)

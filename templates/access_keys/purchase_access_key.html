@@ -15,9 +15,32 @@
           </div>
           <form method="post" novalidate>
             {% csrf_token %}
-            {{ form|crispy }}
-            <div>
+            {{ form.payment_method|as_crispy_field }}
+            <div id="card-fields" style="display: none;">
+                {{ form.card_number|as_crispy_field }}
+                {{ form.card_expiry|as_crispy_field }}
+                {{ form.card_cvv|as_crispy_field }}
             </div>
+            <div id="card-error-messages">
+                {% if form.card_number.errors %}
+                    <div class="alert alert-danger">{{ form.card_number.errors }}</div>
+                {% endif %}
+                {% if form.card_expiry.errors %}
+                    <div class="alert alert-danger">{{ form.card_expiry.errors }}</div>
+                {% endif %}
+                {% if form.card_cvv.errors %}
+                    <div class="alert alert-danger">{{ form.card_cvv.errors }}</div>
+                {% endif %}
+            </div>
+            <div id="momo-fields" style="display: none;">
+                {{ form.mobile_money_number|as_crispy_field }}
+            </div>
+            <div id="momo-error-messages">
+                {% if form.mobile_money_number.errors %}
+                    <div class="alert alert-danger">{{ form.mobile_money_number.errors }}</div>
+                {% endif %}
+            </div>
+            {{ form.confirm_purchase|as_crispy_field }}
             <div class="mt-3">
               <button type="submit" class="btn btn-primary">Submit</button>
               <a href="{% url 'school_dashboard' %}" class="btn btn-secondary">Cancel</a>

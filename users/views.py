@@ -179,23 +179,31 @@ def billing_information_view(request):
 def profile_complete_view(request):
     user = request.user
     
+    if user.is_profile_complete():
+        messages.info(request, 'Your profile is already complete.')
+        return redirect('profile')
+    
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=user)
         if form.is_valid():
-            if not user.is_admin and not user.school:
+            if user.is_school_personnel and not user.school:
                 user.school = form.cleaned_data.get('school')
             form.save()
+            if user.is_profile_complete():
+                user.profile_completed = True
+                user.save()
             messages.success(request, 'Profile updated successfully.')
             return redirect('home')
-
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = ProfileForm(instance=user)
         if user.is_admin:
-            form.fields.pop('school', None)
+            form.fields.pop('school')
         else:
             if user.school:
-                form.fields.pop('school', None)
-            form.fields.pop('staff_id', None)
+                form.fields['school'].disabled = True
+            form.fields.pop('staff_id')
 
     context = {
         'form': form

@@ -14,7 +14,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
-    <link rel="stylesheet" href="{% static 'css/home_styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/table_styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
     <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
@@ -121,8 +120,8 @@
                             <p><small>Total Active Keys</small></p>
                         {% endif %}
                     {% else %}
-                    <h6>About Access Key Manager</h6>
-                    <p><small>Manage your school's access keys efficiently and securely. Log in to get started.</small></p>
+                        <h6>About Access Key Manager</h6>
+                        <p><small>Manage your school's access keys efficiently and securely. Log in to get started.</small></p>
                     {% endif %}
                 </div>
             
@@ -140,8 +139,8 @@
                             <p><small>Total Keys Purchased</small></p>
                         {% endif %}
                     {% else %}
-                    <h6>Get Started</h6>
-                    <p><small>To use Access Key Manager, log in or register. You can view and manage your access keys once logged in.</small></p>
+                        <h6>Get Started</h6>
+                        <p><small>To use Access Key Manager, log in or register. You can view and manage your access keys once logged in.</small></p>
                     {% endif %}
                 </div>
             </div>
@@ -178,14 +177,14 @@
                             </ul>
                         </small>
                     </div>
+                    <hr>
+                    <div class="text-center">
+                        <small>
+                            &copy; 2024 Access Key Manager. All rights reserved.
+                        </small>
+                    </div>
                 </div>
             </div>
-        </div>
-        <hr>
-        <div class="text-center p-3 bg-light">
-            <small>
-                &copy; 2024 Access Key Manager. All rights reserved.
-            </small>
         </div>
     </footer>
     {% endblock %}

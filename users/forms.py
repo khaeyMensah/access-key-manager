@@ -22,6 +22,7 @@ class LoginForm(AuthenticationForm):
     class Meta:
         model = User
 
+
 class ProfileForm(forms.ModelForm):
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
@@ -38,8 +39,9 @@ class ProfileForm(forms.ModelForm):
         email = cleaned_data.get('email')
         if not email:
             self.add_error('email', 'Please provide an email address.')
-        return cleaned_data
 
+        return cleaned_data
+    
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -48,7 +50,8 @@ class ProfileUpdateForm(forms.ModelForm):
 
 
 class BillingInformationForm(forms.ModelForm):
-    card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+    card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'month'}), required=False)
+    payment_method = forms.ChoiceField(choices=[('', 'Select a payment method')] + BillingInformation.PAYMENT_METHODS, required=True, label='Payment Method')
     confirm_purchase = forms.BooleanField(required=True, initial=False, label='Confirm purchase')
 
     class Meta:
@@ -83,8 +86,10 @@ class BillingInformationForm(forms.ModelForm):
 
 
 class UpdateBillingInformationForm(forms.ModelForm):
-    card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
-
+    card_expiry = forms.DateField(widget=forms.DateInput(attrs={'type': 'month'}), required=False)
+    payment_method = forms.ChoiceField(
+        choices=[('', 'Select a payment method')] + BillingInformation.PAYMENT_METHODS, required=True, label='Payment Method')
+    
     class Meta:
         model = BillingInformation
         fields = ['payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
@@ -114,3 +119,4 @@ class UpdateBillingInformationForm(forms.ModelForm):
                 self.add_error(None, 'Credit card details are not required for MOMO payment.')
 
         return cleaned_data
+    

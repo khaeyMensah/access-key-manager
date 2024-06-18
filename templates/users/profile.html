@@ -24,6 +24,9 @@
             <p><strong>Last Name:</strong> {{ user.last_name }}</p>
             {% if user.is_admin %}
             <p><strong>Staff ID:</strong> {{ user.staff_id }}</p>
+            <div class="mt-3">
+                <a href="{% url 'update_profile' %}" class="btn btn-primary">Update Profile</a>
+            </div>
             {% elif user.is_school_personnel %}
                 {% if user.school %}
                     <p><strong>School:</strong> {{ user.school.name }}</p>
