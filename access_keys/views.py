@@ -107,10 +107,10 @@ def revoke_access_key_view(request, key_id):
 def mock_payment_process(billing_info):
     payment_method = billing_info.payment_method
 
-    if payment_method == "Card":
-        payment_successful = random.random() < 0.8
-    elif payment_method == "MTN":
-        payment_successful = random.random() < 0.9
+    if payment_method == "card":
+        payment_successful = random.random() < 0.8      # 80% success rate
+    elif payment_method == "mtn_momo":
+        payment_successful = random.random() < 0.9      # 80% success rate
     else:
         payment_successful = False
 

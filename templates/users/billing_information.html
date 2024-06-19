@@ -12,12 +12,12 @@
     <div class="mt-4">
         <h4>Payment Details</h4>
         {% if billing_info %}
-            <p><strong>Payment Method:</strong> {{ billing_info.payment_method }}</p>
-            {% if billing_info.payment_method == "Card" %}
+            <p><strong>Payment Method:</strong> {{ billing_info.get_payment_method_display }}</p>
+            {% if billing_info.payment_method == "card" %}
                 <p><strong>Card Number:</strong> **** **** **** {{ billing_info.card_number|slice:"-4:" }}</p>
                 <p><strong>Expiry:</strong> {{ billing_info.card_expiry }}</p>
                 <p><strong>CVV:</strong> ***</p>
-            {% elif billing_info.payment_method == "MTN" %}
+            {% elif billing_info.payment_method == "mtn_momo" %}
                 <p><strong>Mobile Money Number:</strong> {{ billing_info.mobile_money_number }}</p>
             {% endif %}
         {% else %}

@@ -189,9 +189,6 @@ def profile_complete_view(request):
             if user.is_school_personnel and not user.school:
                 user.school = form.cleaned_data.get('school')
             form.save()
-            if user.is_profile_complete():
-                user.profile_completed = True
-                user.save()
             messages.success(request, 'Profile updated successfully.')
             return redirect('home')
         else:
@@ -220,7 +217,7 @@ def update_billing_information_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Billing information updated successfully.')
-            return redirect('profile')
+            return redirect('billing_information')
     else:
         form = UpdateBillingInformationForm(instance=billing_information)
 
