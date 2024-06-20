@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'rest_framework',
     'crispy_forms',
+    'paystack',
     'crispy_bootstrap5',
 ]
 
@@ -157,28 +158,40 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
+# Price of access key
 ACCESS_KEY_PRICE = 100.00
 
+# URL to redirect to after login
 LOGIN_REDIRECT_URL = 'home'
 
-LOGOUT_REDIRECT_URL = 'home' 
+# URL to redirect to after logout
+LOGOUT_REDIRECT_URL = 'home'
 
+# Site ID for Django's sites framework
 SITE_ID = 1
 
+# Authentication backends
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+# Authentication method: username and email
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+
+# Require email for account creation
 ACCOUNT_EMAIL_REQUIRED = True
+
+# Email verification is mandatory
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
+# Rate limits for account activities
 ACCOUNT_RATE_LIMITS = {
-    'login_failed': '5/300s', 
-    'signup': '20/h', 
-    'password_reset': '5/60m',  
+    'login_failed': '5/300s',    # 5 failed login attempts per 5 minutes
+    'signup': '20/h',            # 20 signups per hour
+    'password_reset': '5/60m',   # 5 password resets per hour
 }
 
+# Email settings
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
@@ -186,13 +199,17 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
+# Paystack API keys
+PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY')
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 
+# Redirect URLs after email confirmation
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'login' 
-ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = 'complete_profile' 
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = 'complete_profile'
 
+# Crispy Forms settings for Bootstrap 5
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
 
 # Celery settings
 CELERY_BROKER_URL = 'redis://localhost:6379/0'

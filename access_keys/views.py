@@ -18,15 +18,28 @@ from .utils import generate_access_key
 @user_passes_test(is_school_personnel)
 @permission_required('users.can_purchase_access_key', raise_exception=True)
 def purchase_access_key_view(request):
+    """
+    This view handles the purchase of an access key for a school.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        If the purchase is successful, redirects to the school dashboard.
+        If the purchase fails, displays an error message.
+
+    Raises:
+        If the user already has an active access key, an error message is displayed.
+
+    """
     school = get_object_or_404(School, users=request.user)
     active_keys = school.access_keys.filter(status='active')
-    
+
     if active_keys.exists():
         messages.error(request, 'You already have an active access key.')
         return redirect('school_dashboard')
-    
-    billing_info = getattr(request.user, 'billing_information', None)
 
+    billing_info = getattr(request.user, 'billing_information', None)
 
     if request.method == 'POST':
         form = BillingInformationForm(request.POST, instance=billing_info)
@@ -55,7 +68,7 @@ def purchase_access_key_view(request):
                     KeyLog.objects.create(
                         access_key=access_key,
                         action=f'Access key {access_key.key} purchased for school {school.name}',
-                        user=request.user
+                        user=request.user,
                     )
 
                     messages.success(request, 'Access key purchased successfully.')
@@ -63,7 +76,7 @@ def purchase_access_key_view(request):
                 else:
                     messages.error(request, 'Payment failed. Please try again.')
             else:
-                messages.error(request, 'You must confirm the purchase to proceed.')    
+                messages.error(request, 'You must confirm the purchase to proceed.')
         else:
             messages.error(request, 'Please provide valid billing information.')
     else:
@@ -82,6 +95,20 @@ def purchase_access_key_view(request):
 @user_passes_test(is_admin)
 @permission_required('users.can_revoke_access_key', raise_exception=True)
 def revoke_access_key_view(request, key_id):
+    """
+    This view handles the revocation of an access key by an admin.
+
+    Args:
+        request: The HTTP request object.
+        key_id: The ID of the access key to be revoked.
+
+    Returns:
+        If the revocation is successful, redirects to the admin dashboard.
+
+    Raises:
+        If the access key does not exist, an error message is displayed.
+
+    """
     access_key = get_object_or_404(AccessKey, id=key_id)
     if request.method == 'POST':
         access_key.status = 'revoked'
@@ -90,21 +117,32 @@ def revoke_access_key_view(request, key_id):
         access_key.save()
 
         KeyLog.objects.create(
-            access_key = access_key,
+            access_key=access_key,
             action=f'Access key {access_key.key} revoked for school {access_key.school.name}',
-            user=request.user
+            user=request.user,
         )
+
         messages.success(request, 'Access key revoked successfully.')
         return redirect('admin_dashboard')
-    
+
     context = common_context_data(request)
-    context.update ({
-        'access_key': access_key
+    context.update({
+        'access_key': access_key,
     })
     return render(request, 'access_keys/revoke_access_key.html', context)
-    
+
 
 def mock_payment_process(billing_info):
+    """
+    This function simulates the payment process with a random success rate based on the payment method.
+
+    Args:
+        billing_info: The billing information object associated with the purchase.
+
+    Returns:
+        A boolean value indicating whether the payment process was successful.
+
+    """
     payment_method = billing_info.payment_method
 
     if payment_method == "card":
