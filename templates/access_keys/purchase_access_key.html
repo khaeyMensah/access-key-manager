@@ -15,6 +15,7 @@
           </div>
           <form method="post" novalidate>
             {% csrf_token %}
+            {{ form.email|as_crispy_field }}
             {{ form.payment_method|as_crispy_field }}
             <div id="card-fields" style="display: none;">
                 {{ form.card_number|as_crispy_field }}
@@ -26,7 +27,7 @@
             </div>
             {{ form.confirm_purchase|as_crispy_field }}
             <div class="mt-3">
-              <button type="submit" class="btn btn-primary">Submit</button>
+              <button type="submit" class="btn btn-primary" id="paystack-button">Proceed to payment</button>
               <a href="{% url 'school_dashboard' %}" class="btn btn-secondary">Cancel</a>
             </div>
           </form>
@@ -34,5 +35,76 @@
       </div>
     </div>
   </div>
+{% endblock %}
 
+{% block scripts %}
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+  // Variables to be used in app.js
+  var paystackPublicKey = "{{ PAYSTACK_SETTINGS.PUBLIC_KEY }}"; // Replace with your public key
+  var userEmail = "{{ user.email }}";
+  var accessKeyPrice = {{ access_key_price }};
+  var callbackUrl = "{{ PAYSTACK_SETTINGS.CALLBACK_URL }}";
+
+  console.log("Paystack Public Key:", paystackPublicKey); // Debugging statement
+  console.log("User Email:", userEmail); // Debugging statement
+  console.log("Access Key Price:", accessKeyPrice); // Debugging statement
+  console.log("Callback URL:", callbackUrl); // Debugging statement
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const paymentMethodField = document.querySelector('select[name="payment_method"]');
+    const cardFields = document.getElementById("card-fields");
+    const momoFields = document.getElementById("momo-fields");
+    const paystackBtn = document.getElementById("paystack-button");
+
+    function clearFields(fields) {
+      fields.querySelectorAll("input").forEach(function (input) {
+        input.value = "";
+      });
+    }
+
+    function toggleFields() {
+      if (paymentMethodField.value === "card") {
+        cardFields.style.display = "";
+        momoFields.style.display = "none";
+        clearFields(momoFields); // Clear mobile money fields
+      } else if (paymentMethodField.value === "mtn_momo") {
+        cardFields.style.display = "none";
+        momoFields.style.display = "";
+        clearFields(cardFields); // Clear card fields
+      } else {
+        cardFields.style.display = "none";
+        momoFields.style.display = "none";
+      }
+    }
+
+    paymentMethodField.addEventListener("change", toggleFields);
+    toggleFields();
+
+    if (paystackBtn) {
+      paystackBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        // Initialize payment using Paystack Inline
+        var handler = PaystackPop.setup({
+          key: paystackPublicKey, // Set in template
+          email: userEmail, // Set in template
+          amount: accessKeyPrice * 100, // Convert to Pesewas
+          currency: "GHS",
+          callback: function (response) {
+            // Redirect to callback URL with reference
+            window.location.href = callbackUrl + "?reference=" + response.reference;
+          },
+          onClose: function () {
+            alert("Payment window closed.");
+          },
+        });
+
+        handler.openIframe();
+      });
+    } else {
+      console.error("Paystack button not found");
+    }
+  });
+</script>
 {% endblock %}

@@ -1,16 +1,22 @@
-import random
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
+from django.urls import reverse
 from django.utils import timezone
+import requests
 
 from access_keys.models import AccessKey, KeyLog
 from users.contexts import common_context_data
 from users.forms import BillingInformationForm
 from users.helpers import is_admin, is_school_personnel
-from users.models import School
+from users.models import School, User
 from .utils import generate_access_key
+
+# import random
+
 
 
 # Create your views here.
@@ -43,41 +49,19 @@ def purchase_access_key_view(request):
 
     if request.method == 'POST':
         form = BillingInformationForm(request.POST, instance=billing_info)
+        print("Form data:", request.POST)  # Debugging
         if form.is_valid():
+            print("Form is valid")  # Debugging
             if form.cleaned_data.get('confirm_purchase'):
                 billing_info = form.save(commit=False)
                 billing_info.user = request.user
                 billing_info.save()
+                return redirect('access_keys:initialize_payment')
 
-                payment_successful = mock_payment_process(billing_info)
-
-                if payment_successful:
-                    procurement_date = timezone.now().date()
-                    expiry_date = timezone.now().date() + timezone.timedelta(days=1)
-                    access_key = AccessKey(
-                        school=school,
-                        key=generate_access_key(),
-                        status='active',
-                        assigned_to=request.user,
-                        procurement_date=procurement_date,
-                        expiry_date=expiry_date,
-                        price=settings.ACCESS_KEY_PRICE,
-                    )
-                    access_key.save()
-
-                    KeyLog.objects.create(
-                        access_key=access_key,
-                        action=f'Access key {access_key.key} purchased for school {school.name}',
-                        user=request.user,
-                    )
-
-                    messages.success(request, 'Access key purchased successfully.')
-                    return redirect('school_dashboard')
-                else:
-                    messages.error(request, 'Payment failed. Please try again.')
             else:
                 messages.error(request, 'You must confirm the purchase to proceed.')
         else:
+            print("Form errors:", form.errors)  # Debugging
             messages.error(request, 'Please provide valid billing information.')
     else:
         form = BillingInformationForm(instance=billing_info)
@@ -87,8 +71,87 @@ def purchase_access_key_view(request):
         'form': form,
         'school': school,
         'access_key_price': settings.ACCESS_KEY_PRICE,
+        'PAYSTACK_SETTINGS': settings.PAYSTACK_SETTINGS,
     })
     return render(request, 'access_keys/purchase_access_key.html', context)
+
+@login_required
+def initialize_payment(request):
+    if request.method == 'POST':
+        billing_info = request.user.billing_information
+        if not billing_info:
+            messages.error(request, 'Billing information is missing.')
+            return redirect('access_keys:purchase_access_key')
+
+        url = f"{settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')}/transaction/initialize"
+        headers = {
+            'Authorization': f'Bearer {settings.PAYSTACK_SETTINGS["SECRET_KEY"]}',
+            'Content-Type': 'application/json',
+        }
+        data = {
+            'email': billing_info.email,
+            'amount': int(settings.ACCESS_KEY_PRICE * 100),  # Convert to pesewas
+            'currency': 'GHS',
+            'callback_url': settings.PAYSTACK_SETTINGS['CALLBACK_URL'],
+        }
+        print("Initializing payment with data:", data)  # Debugging
+        response = requests.post(url, headers=headers, json=data)
+        print("Paystack response:", response.status_code, response.json())  # Debugging
+
+        if response.status_code == 200:
+            authorization_url = response.json()['data']['authorization_url']
+            return redirect(authorization_url)
+        else:
+            messages.error(request, 'Unable to initialize payment.')
+            return redirect('access_keys:purchase_access_key')
+    return redirect('access_keys:purchase_access_key')
+
+@require_GET
+def paystack_callback(request):
+    reference = request.GET.get('reference')
+    if not reference:
+        return HttpResponse('No reference supplied')
+
+    url = f"{settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')}/transaction/verify/{reference}"
+    headers = {
+        'Authorization': f'Bearer {settings.PAYSTACK_SETTINGS["SECRET_KEY"]}',
+    }
+    response = requests.get(url, headers=headers)
+    result = response.json()
+
+    if result['status']:
+        # Payment was successful
+        amount = result['data']['amount'] / 100  # Convert from pesewas to your Cedis
+        email = result['data']['customer']['email']
+
+        user = get_object_or_404(User, email=email)
+        school = get_object_or_404(School, users=user)
+
+        # Create access key
+        procurement_date = timezone.now().date()
+        expiry_date = procurement_date + timezone.timedelta(days=1)
+        access_key = AccessKey.objects.create(
+            school=school,
+            key=generate_access_key(),
+            status='active',
+            assigned_to=user,
+            procurement_date=procurement_date,
+            expiry_date=expiry_date,
+            price=amount,
+        )
+
+        KeyLog.objects.create(
+            access_key=access_key,
+            action=f'Access key {access_key.key} purchased for school {school.name}',
+            user=user
+        )
+
+        messages.success(request, 'Payment successful. Access key purchased.')
+    else:
+        messages.error(request, 'Payment failed.')
+
+    return redirect('school_dashboard')
+
 
 
 @login_required
@@ -131,25 +194,3 @@ def revoke_access_key_view(request, key_id):
     })
     return render(request, 'access_keys/revoke_access_key.html', context)
 
-
-def mock_payment_process(billing_info):
-    """
-    This function simulates the payment process with a random success rate based on the payment method.
-
-    Args:
-        billing_info: The billing information object associated with the purchase.
-
-    Returns:
-        A boolean value indicating whether the payment process was successful.
-
-    """
-    payment_method = billing_info.payment_method
-
-    if payment_method == "card":
-        payment_successful = random.random() < 0.8      # 80% success rate
-    elif payment_method == "mtn_momo":
-        payment_successful = random.random() < 0.9      # 80% success rate
-    else:
-        payment_successful = False
-
-    return payment_successful

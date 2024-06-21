@@ -125,13 +125,14 @@ class BillingInformationForm(forms.ModelForm):
         clean_card_expiry(self): Validates the credit card expiry date and raises a ValidationError if it's empty or not in the correct format.
 
     """
+    email = forms.EmailField()
     payment_method = forms.ChoiceField(choices=[('', 'Select a payment method')] + BillingInformation.PAYMENT_METHODS, required=True, label='Payment Method')
     card_expiry = forms.CharField(required=False, label='Card Expiry', widget=forms.TextInput(attrs={'placeholder': 'mm/yy'}))
     confirm_purchase = forms.BooleanField(required=True, initial=False, label='Confirm purchase')
 
     class Meta:
         model = BillingInformation
-        fields = ['payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
+        fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
 
     def clean_card_expiry(self):
         """

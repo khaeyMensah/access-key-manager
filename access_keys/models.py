@@ -65,28 +65,9 @@ class KeyLog(models.Model):
         user (ForeignKey): The user who performed the action.
         access_key (ForeignKey): The access key on which the action was performed.
         timestamp (DateTimeField): The timestamp when the action was performed.
-
-    Methods:
-        __init__(self, action: str, user: User, access_key: AccessKey, timestamp: datetime.datetime): Initializes a new instance of the KeyLog class.
     """
 
     action = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     access_key = models.ForeignKey(AccessKey, on_delete=models.CASCADE, related_name='key_logs')
     timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __init__(self, action: str, user: User, access_key: AccessKey, timestamp: datetime.datetime):
-        """
-        Initializes a new instance of the KeyLog class.
-
-        Args:
-            action (str): A description of the action performed on the access key.
-            user (User): The user who performed the action.
-            access_key (AccessKey): The access key on which the action was performed.
-            timestamp (datetime.datetime): The timestamp when the action was performed.
-        """
-        super().__init__()
-        self.action = action
-        self.user = user
-        self.access_key = access_key
-        self.timestamp = timestamp

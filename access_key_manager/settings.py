@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'rest_framework',
     'crispy_forms',
-    'paystack',
+    'django_paystack',
     'crispy_bootstrap5',
 ]
 
@@ -200,9 +200,16 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 # Paystack API keys
-PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY')
-PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
-
+PAYSTACK_SETTINGS = {
+    'PUBLIC_KEY': config('PAYSTACK_PUBLIC_KEY'),
+    'SECRET_KEY': config('PAYSTACK_SECRET_KEY'),
+    'BASE_URL': 'https://api.paystack.co',
+    'CURRENCY': 'GHS',
+    'BUTTON_ID': 'paystack-payment-button',  
+    'BUTTON_CLASS': 'btn btn-primary',
+    'CALLBACK_URL': config('CALLBACK_URL'),
+}
+    
 # Redirect URLs after email confirmation
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'login' 
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = 'complete_profile'
