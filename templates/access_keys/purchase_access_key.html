@@ -15,15 +15,16 @@
           </div>
           <form method="post" novalidate>
             {% csrf_token %}
-            {{ form.email|as_crispy_field }}
-            {{ form.payment_method|as_crispy_field }}
+              {{ form.user_id|as_crispy_field }}
+              {{ form.email|as_crispy_field }}
+              {{ form.payment_method|as_crispy_field }}
             <div id="card-fields" style="display: none;">
-                {{ form.card_number|as_crispy_field }}
-                {{ form.card_expiry|as_crispy_field }}
-                {{ form.card_cvv|as_crispy_field }}
+              {{ form.card_number|as_crispy_field }}
+              {{ form.card_expiry|as_crispy_field }}
+              {{ form.card_cvv|as_crispy_field }}
             </div>
             <div id="momo-fields" style="display: none;">
-                {{ form.mobile_money_number|as_crispy_field }}
+              {{ form.mobile_money_number|as_crispy_field }}
             </div>
             {{ form.confirm_purchase|as_crispy_field }}
             <div class="mt-3">
@@ -45,11 +46,13 @@
   var userEmail = "{{ user.email }}";
   var accessKeyPrice = {{ access_key_price }};
   var callbackUrl = "{{ PAYSTACK_SETTINGS.CALLBACK_URL }}";
+  var userID = "{{ request.user.id }}"; // Corrected here to retrieve the actual user ID
 
   console.log("Paystack Public Key:", paystackPublicKey); // Debugging statement
   console.log("User Email:", userEmail); // Debugging statement
   console.log("Access Key Price:", accessKeyPrice); // Debugging statement
   console.log("Callback URL:", callbackUrl); // Debugging statement
+  console.log("User ID:", userID); // Debugging statement
 
   document.addEventListener("DOMContentLoaded", function () {
     const paymentMethodField = document.querySelector('select[name="payment_method"]');
@@ -91,7 +94,20 @@
           email: userEmail, // Set in template
           amount: accessKeyPrice * 100, // Convert to Pesewas
           currency: "GHS",
+          metadata: {
+            custom_fields: [
+              {
+                display_name: "User ID",
+                variable_name: "user_id",
+                value: userID
+              }
+            ]
+          },
+
           callback: function (response) {
+            // Log the reference for debugging
+            console.log("Payment reference:", response.reference);
+
             // Redirect to callback URL with reference
             window.location.href = callbackUrl + "?reference=" + response.reference;
           },

@@ -1,19 +1,23 @@
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 from .tokens import account_activation_token
+from django.core.mail import send_mail
 
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import login as auth_login, logout
-from users.helpers import is_school_personnel, is_admin
-from access_keys.models import AccessKey, KeyLog, School
-from django.contrib import messages
-from users.models import BillingInformation, User
 from users.forms import ProfileUpdateForm, RegistrationForm, LoginForm, ProfileForm, UpdateBillingInformationForm
+from users.helpers import is_school_personnel, is_admin
 from users.contexts import common_context_data
+from users.models import BillingInformation, User
+from access_keys.models import AccessKey, KeyLog
+from django.contrib import messages
+from django.conf import settings
+
+
 
 
 # Create your views here.
@@ -35,28 +39,24 @@ def home(request):
 @user_passes_test(is_school_personnel)
 def school_dashboard_view(request):
     """
-    This function renders the school dashboard page for authenticated school personnel.
+    Renders the school dashboard page for authenticated school personnel.
 
     Args:
         request: The HTTP request object.
 
     Returns:
         A rendered HTML response containing the school dashboard page.
-
-    Raises:
-        Redirect: If the user is not a school personnel.
     """
-    if not request.user.is_school_personnel:
-        return redirect('access_denied')
+    user = request.user
+    if not user.is_profile_complete():
+        messages.error(request, 'Please complete your profile to access the school dashboard.')
+        return redirect('complete_profile')
 
     try:
-        school = request.user.school
+        school = user.school
         access_keys = school.access_keys.order_by('-procurement_date')
-    except School.DoesNotExist:
-        messages.error(request, 'No school associated with your account.')
-        return redirect('complete_profile')
-    except AttributeError:
-        messages.error(request, 'Error retrieving access keys. Complete your profile.')
+    except ObjectDoesNotExist:
+        messages.error(request, 'No school associated with your account. Please complete your profile.')
         return redirect('complete_profile')
 
     context = common_context_data(request)
@@ -66,26 +66,20 @@ def school_dashboard_view(request):
     })
     return render(request, 'users/school_dashboard.html', context)
 
-
 @login_required
 @user_passes_test(is_admin)
 def admin_dashboard_view(request):
     """
-    This function renders the admin dashboard page for authenticated admins users.
+    Renders the admin dashboard page for authenticated admin users.
 
     Args:
         request: The HTTP request object.
 
     Returns:
         A rendered HTML response containing the admin dashboard page.
-
-    Raises:
-        Redirect: If the user is not an admin.
     """
-    if not request.user.is_admin:
-        return redirect('access_denied')
-
-    if not request.user.first_name or not request.user.last_name or not request.user.staff_id:
+    user = request.user
+    if not user.is_profile_complete():
         messages.error(request, 'Please complete your profile to access the admin dashboard.')
         return redirect('complete_profile')
 
@@ -102,7 +96,7 @@ def admin_dashboard_view(request):
 
 def registration_options_view(request):
     """
-    This function renders the registration options page.
+    This function renders the registration options page, where users choose whether they are school personnel or admin.
 
     Args:
         request: The HTTP request object.
@@ -152,9 +146,6 @@ def send_verification_email(request, user):
     Args:
         request: The HTTP request object.
         user: The newly registered user.
-
-    Returns:
-        A rendered HTML response containing the verification email.
     """
     current_site = get_current_site(request)
     mail_subject = 'Activate your account.'
@@ -165,7 +156,7 @@ def send_verification_email(request, user):
         'token': account_activation_token.make_token(user),
     })
     to_email = user.email
-    send_mail(mail_subject, message, 'ekmpizarro@gmail.com', [to_email])
+    send_mail(mail_subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
 
 
 def activate(request, uidb64, token):
@@ -194,34 +185,6 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, 'Activation link is invalid!')
         return render(request, 'authentication/activation_invalid.html')
-
-
-
-# def account_activation_sent(request):
-#     """
-#     Renders the account activation sent page.
-    
-#     Args:
-#         request (HttpRequest): The request object.
-    
-#     Returns:
-#         HttpResponse: The rendered account activation sent page.
-#     """
-#     return render(request, 'users/account_activation_sent.html')
-
-# def account_activation_invalid(request):
-#     """
-#     Renders the account activation invalid page.
-    
-#     Args:
-#         request (HttpRequest): The request object.
-    
-#     Returns:
-#         HttpResponse: The rendered account activation invalid page.
-#     """
-#     return render(request, 'users/account_activation_invalid.html')
-
-
 
 
 def login_view(request):
@@ -291,31 +254,7 @@ def profile_view(request):
 
 
 @login_required
-def billing_information_view(request):
-    """
-    This function renders the user's billing information page.
-
-    Args:
-        request: The HTTP request object.
-
-    Returns:
-        A rendered HTML response containing the user's billing information page.
-    """
-    user = request.user
-    try:
-        billing_info = BillingInformation.objects.get(user=user)
-    except BillingInformation.DoesNotExist:
-        return redirect('update_billing_info')
-
-    context = common_context_data(request)
-    context.update({
-        'billing_info': billing_info,
-    })
-    return render(request, 'users/billing_information.html', context)
-
-
-@login_required
-def profile_complete_view(request):
+def complete_profile_view(request):
     """
     This function handles the completion of the user's profile.
 
@@ -339,6 +278,8 @@ def profile_complete_view(request):
         if form.is_valid():
             if user.is_school_personnel and not user.school:
                 user.school = form.cleaned_data.get('school')
+            if user.is_admin and not user.staff_id:
+                user.staff_id = form.cleaned_data.get('staff_id')
             form.save()
             messages.success(request, 'Profile updated successfully.')
             return redirect('home')
@@ -357,6 +298,59 @@ def profile_complete_view(request):
         'form': form,
     }
     return render(request, 'users/complete_profile.html', context)
+
+
+@login_required
+def update_profile_view(request):
+    """
+    This function handles the update of the user's profile.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        A rendered HTML response containing the profile update form.
+    """
+    if request.method == 'POST':
+        profile_form = ProfileUpdateForm(request.POST, instance=request.user)
+        if profile_form.is_valid():
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated successfully.')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        profile_form = ProfileUpdateForm(instance=request.user)
+
+    context = common_context_data(request)
+    context.update({
+        'profile_form': profile_form,
+    })
+    return render(request, 'users/update_profile.html', context)
+
+
+@login_required
+def billing_information_view(request):
+    """
+    This function renders the user's billing information page.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        A rendered HTML response containing the user's billing information page.
+    """
+    user = request.user
+    try:
+        billing_info = BillingInformation.objects.get(user=user)
+    except BillingInformation.DoesNotExist:
+        return redirect('update_billing_info')
+
+    context = common_context_data(request)
+    context.update({
+        'billing_info': billing_info,
+    })
+    return render(request, 'users/billing_information.html', context)
 
 
 @login_required
@@ -388,30 +382,3 @@ def update_billing_information_view(request):
     return render(request, 'users/update_billing_info.html', context)
 
 
-@login_required
-def update_profile_view(request):
-    """
-    This function handles the update of the user's profile.
-
-    Args:
-        request: The HTTP request object.
-
-    Returns:
-        A rendered HTML response containing the profile update form.
-    """
-    if request.method == 'POST':
-        profile_form = ProfileUpdateForm(request.POST, instance=request.user)
-        if profile_form.is_valid():
-            profile_form.save()
-            messages.success(request, 'Your profile has been updated successfully.')
-            return redirect('profile')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        profile_form = ProfileUpdateForm(instance=request.user)
-
-    context = common_context_data(request)
-    context.update({
-        'profile_form': profile_form,
-    })
-    return render(request, 'users/update_profile.html', context)

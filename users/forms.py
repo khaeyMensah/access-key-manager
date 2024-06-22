@@ -129,10 +129,33 @@ class BillingInformationForm(forms.ModelForm):
     payment_method = forms.ChoiceField(choices=[('', 'Select a payment method')] + BillingInformation.PAYMENT_METHODS, required=True, label='Payment Method')
     card_expiry = forms.CharField(required=False, label='Card Expiry', widget=forms.TextInput(attrs={'placeholder': 'mm/yy'}))
     confirm_purchase = forms.BooleanField(required=True, initial=False, label='Confirm purchase')
-
+    user_id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    
     class Meta:
         model = BillingInformation
-        fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
+        fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv', 'user_id']
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes the form with the provided arguments.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Raises:
+            ValueError: If 'user' keyword argument is not provided.
+
+        Returns:
+            None: This method does not return any value.
+
+        Additional Information:
+            - If a 'user' object is provided, it sets the 'user_id' field's initial value to the 'user' object's id.
+        """
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['user_id'].initial = user.id
 
     def clean_card_expiry(self):
         """
@@ -191,6 +214,8 @@ class BillingInformationForm(forms.ModelForm):
                 self.add_error(None, 'Credit card details are not required for MOMO payment.')
 
         return cleaned_data
+    
+
 
 class UpdateBillingInformationForm(forms.ModelForm):
     """

@@ -4,18 +4,15 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
-from django.urls import reverse
 from django.utils import timezone
 import requests
-
+from django.views.decorators.csrf import csrf_exempt
 from access_keys.models import AccessKey, KeyLog
 from users.contexts import common_context_data
 from users.forms import BillingInformationForm
 from users.helpers import is_admin, is_school_personnel
 from users.models import School, User
 from .utils import generate_access_key
-
-# import random
 
 
 
@@ -48,14 +45,14 @@ def purchase_access_key_view(request):
     billing_info = getattr(request.user, 'billing_information', None)
 
     if request.method == 'POST':
-        form = BillingInformationForm(request.POST, instance=billing_info)
-        print("Form data:", request.POST)  # Debugging
+        form = BillingInformationForm(request.POST, instance=billing_info, user=request.user)
         if form.is_valid():
-            print("Form is valid")  # Debugging
             if form.cleaned_data.get('confirm_purchase'):
                 billing_info = form.save(commit=False)
                 billing_info.user = request.user
                 billing_info.save()
+                request.POST = request.POST.copy()
+                request.POST['user_id'] = request.user.id
                 return redirect('access_keys:initialize_payment')
 
             else:
@@ -64,7 +61,7 @@ def purchase_access_key_view(request):
             print("Form errors:", form.errors)  # Debugging
             messages.error(request, 'Please provide valid billing information.')
     else:
-        form = BillingInformationForm(instance=billing_info)
+        form = BillingInformationForm(instance=billing_info, user=request.user)
 
     context = common_context_data(request)
     context.update({
@@ -75,83 +72,117 @@ def purchase_access_key_view(request):
     })
     return render(request, 'access_keys/purchase_access_key.html', context)
 
+
 @login_required
 def initialize_payment(request):
     if request.method == 'POST':
-        billing_info = request.user.billing_information
+        user = request.user
+        billing_info = user.billing_information
         if not billing_info:
             messages.error(request, 'Billing information is missing.')
             return redirect('access_keys:purchase_access_key')
 
-        url = f"{settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')}/transaction/initialize"
+      # Retrieve user_id from the form data
+        user_id = request.POST.get('user_id')
+        
+        base_url = settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')
+        callback_url = f"{settings.PAYSTACK_SETTINGS['CALLBACK_URL']}"
+
+        url = f"{base_url}/transaction/initialize"
         headers = {
             'Authorization': f'Bearer {settings.PAYSTACK_SETTINGS["SECRET_KEY"]}',
             'Content-Type': 'application/json',
         }
         data = {
             'email': billing_info.email,
-            'amount': int(settings.ACCESS_KEY_PRICE * 100),  # Convert to pesewas
+            'amount': int(settings.ACCESS_KEY_PRICE * 100),
             'currency': 'GHS',
-            'callback_url': settings.PAYSTACK_SETTINGS['CALLBACK_URL'],
+            'callback_url': callback_url,
+            'metadata': {
+                'user_id': user_id,
+            }
         }
-        print("Initializing payment with data:", data)  # Debugging
-        response = requests.post(url, headers=headers, json=data)
-        print("Paystack response:", response.status_code, response.json())  # Debugging
 
-        if response.status_code == 200:
-            authorization_url = response.json()['data']['authorization_url']
-            return redirect(authorization_url)
-        else:
-            messages.error(request, 'Unable to initialize payment.')
-            return redirect('access_keys:purchase_access_key')
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            result = response.json()
+            if result['status']:
+                authorization_url = result['data']['authorization_url']
+                return redirect(authorization_url)
+            else:
+                messages.error(request, f"Payment initialization failed: {result.get('message', 'Unknown error')}")
+        except requests.RequestException as e:
+            messages.error(request, f"Network error occurred: {str(e)}")
+        except Exception as e:
+            messages.error(request, f"An unexpected error occurred: {str(e)}")
+
     return redirect('access_keys:purchase_access_key')
 
+
+
 @require_GET
+@csrf_exempt
 def paystack_callback(request):
     reference = request.GET.get('reference')
+
     if not reference:
-        return HttpResponse('No reference supplied')
+        return HttpResponse('Reference not supplied', status=400)
 
     url = f"{settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')}/transaction/verify/{reference}"
     headers = {
         'Authorization': f'Bearer {settings.PAYSTACK_SETTINGS["SECRET_KEY"]}',
     }
-    response = requests.get(url, headers=headers)
-    result = response.json()
+    
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        result = response.json()
 
-    if result['status']:
-        # Payment was successful
-        amount = result['data']['amount'] / 100  # Convert from pesewas to your Cedis
-        email = result['data']['customer']['email']
+        if result['status']:
+            # Payment was successful
+            amount = result['data']['amount'] / 100
+            metadata = result['data'].get('metadata', {})
+            user_id = metadata.get('custom_fields', [{}])[0].get('value')  # Correct extraction of user_id
+            
+            if not user_id:
+                return HttpResponse('User ID not found in transaction metadata', status=400)
 
-        user = get_object_or_404(User, email=email)
-        school = get_object_or_404(School, users=user)
+            try:
+                user = get_object_or_404(User, id=user_id)
+            except User.DoesNotExist:
+                return HttpResponse(f'User with ID {user_id} not found in database', status=400)
+            school = get_object_or_404(School, users=user)
 
-        # Create access key
-        procurement_date = timezone.now().date()
-        expiry_date = procurement_date + timezone.timedelta(days=1)
-        access_key = AccessKey.objects.create(
-            school=school,
-            key=generate_access_key(),
-            status='active',
-            assigned_to=user,
-            procurement_date=procurement_date,
-            expiry_date=expiry_date,
-            price=amount,
-        )
+            # Create access key
+            procurement_date = timezone.now().date()
+            expiry_date = procurement_date + timezone.timedelta(days=1)
+            access_key = AccessKey.objects.create(
+                school=school,
+                key=generate_access_key(),
+                status='active',
+                assigned_to=user,
+                procurement_date=procurement_date,
+                expiry_date=expiry_date,
+                price=amount,
+            )
 
-        KeyLog.objects.create(
-            access_key=access_key,
-            action=f'Access key {access_key.key} purchased for school {school.name}',
-            user=user
-        )
+            KeyLog.objects.create(
+                access_key=access_key,
+                action=f'Access key {access_key.key} purchased for school {school.name}',
+                user=user
+            )
 
-        messages.success(request, 'Payment successful. Access key purchased.')
-    else:
-        messages.error(request, 'Payment failed.')
+            messages.success(request, 'Payment successful. Access key purchased.')
+            return redirect('school_dashboard')
+        else:
+            messages.error(request, 'Payment failed.')
+            return redirect('school_dashboard')
 
-    return redirect('school_dashboard')
-
+    except requests.RequestException as e:
+        return HttpResponse(f'Network error: {str(e)}', status=500)
+    except Exception as e:
+        return HttpResponse(f'An unexpected error occurred: {str(e)}', status=500)
 
 
 @login_required
@@ -167,10 +198,7 @@ def revoke_access_key_view(request, key_id):
 
     Returns:
         If the revocation is successful, redirects to the admin dashboard.
-
-    Raises:
         If the access key does not exist, an error message is displayed.
-
     """
     access_key = get_object_or_404(AccessKey, id=key_id)
     if request.method == 'POST':

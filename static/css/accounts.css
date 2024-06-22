@@ -5,6 +5,10 @@
   color: #000000;
 }
 
+a {
+  text-decoration: none;
+}
+
 .app-logo {
   width: 100px;
   margin: auto;
