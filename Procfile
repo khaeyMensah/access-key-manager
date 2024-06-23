@@ -1,1 +1,1 @@
-web: gunicorn access_key_manager.wsgi:application & celery -A access_key_manager worker --loglevel=info & celery -A access_key_manager beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+web: supervisord -c Supervisord.conf
