@@ -5,3 +5,4 @@ from .models import AccessKey, School, KeyLog
 admin.site.register(AccessKey)
 admin.site.register(School)
 admin.site.register(KeyLog)
+

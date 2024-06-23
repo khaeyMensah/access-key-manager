@@ -6,7 +6,12 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.utils import timezone
 import requests
+
 from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
 from access_keys.models import AccessKey, KeyLog
 from users.contexts import common_context_data
 from users.forms import BillingInformationForm
@@ -75,6 +80,20 @@ def purchase_access_key_view(request):
 
 @login_required
 def initialize_payment(request):
+    """
+    This view handles the initialization of a payment for purchasing an access key.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        If the payment initialization is successful, redirects to the authorization URL provided by the payment gateway.
+        If the payment initialization fails, displays an error message.
+
+    Raises:
+        If the user's billing information is missing, an error message is displayed.
+
+    """
     if request.method == 'POST':
         user = request.user
         billing_info = user.billing_information
@@ -82,9 +101,9 @@ def initialize_payment(request):
             messages.error(request, 'Billing information is missing.')
             return redirect('access_keys:purchase_access_key')
 
-      # Retrieve user_id from the form data
+        # Retrieve user_id from the form data
         user_id = request.POST.get('user_id')
-        
+
         base_url = settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')
         callback_url = f"{settings.PAYSTACK_SETTINGS['CALLBACK_URL']}"
 
@@ -100,7 +119,7 @@ def initialize_payment(request):
             'callback_url': callback_url,
             'metadata': {
                 'user_id': user_id,
-            }
+            },
         }
 
         try:
@@ -124,6 +143,30 @@ def initialize_payment(request):
 @require_GET
 @csrf_exempt
 def paystack_callback(request):
+    """
+    This view handles the callback from Paystack after a successful payment for purchasing an access key.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing the reference parameter.
+
+    Returns:
+        HttpResponse: A response containing a success or error message based on the payment status.
+
+    Raises:
+        Http400Response: If the reference parameter is not supplied in the request.
+        Http500Response: If a network error or unexpected error occurs during the payment verification process.
+
+    The function first checks if the reference parameter is supplied in the request. If not, it returns an Http400Response with a message indicating that the reference parameter is missing.
+
+    If the reference parameter is supplied, the function constructs the URL for verifying the payment using the reference parameter and the Paystack settings. It then sends a GET request to the Paystack API with the necessary headers and retrieves the payment verification result.
+
+    If the payment verification result is successful, the function extracts the user ID from the transaction metadata, retrieves the corresponding User and School objects, creates a new AccessKey object, logs the action in the KeyLog model, and sends an email notification to the user. Finally, it returns an HttpResponse with a success message and redirects to the school dashboard.
+
+    If the payment verification result is not successful, the function returns an HttpResponse with an error message and redirects to the school dashboard.
+
+    If any network or unexpected errors occur during the payment verification process, the function returns an Http500Response with a message indicating the nature of the error.
+    """
+
     reference = request.GET.get('reference')
 
     if not reference:
@@ -172,6 +215,16 @@ def paystack_callback(request):
                 action=f'Access key {access_key.key} purchased for school {school.name}',
                 user=user
             )
+            
+            # Send email notification
+            subject = 'Access Key Purchase Successful'
+            html_message = render_to_string('emails/access_key_purchase_success.html', {'user': user, 'access_key': access_key, 'school': school})
+            plain_message = strip_tags(html_message)
+            from_email = settings.DEFAULT_FROM_EMAIL
+            to = user.email
+
+            send_mail(subject, plain_message, from_email, [to], html_message=html_message)
+
 
             messages.success(request, 'Payment successful. Access key purchased.')
             return redirect('school_dashboard')

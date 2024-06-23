@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django_paystack',
     'crispy_bootstrap5',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -227,3 +228,5 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
