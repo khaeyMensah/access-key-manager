@@ -7,7 +7,7 @@ services:
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: access_key_manager.settings
-      - name: PORT
+      - key: PORT
         value: 8000
     postdeploy:
       - python manage.py migrate
@@ -22,4 +22,4 @@ services:
     name: celery-beat
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: celery -A access_key_manager beat --loglevel=info
+    startCommand: celery -A access_key_manager beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
