@@ -4,6 +4,7 @@ from datetime import datetime, time, timedelta
 from access_keys.models import AccessKey, KeyLog
 from users.models import User 
 from celery.utils.log import get_task_logger
+import psutil
 
 logger = get_task_logger(__name__)
 
@@ -52,3 +53,11 @@ def update_key_statuses():
         logger.info("No upcoming expiries. Next check will be in 1 hour.")
 
     return f"Update completed. Expired {expired_count} keys."
+
+@shared_task
+def monitor_memory():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    cpu_usage = process.cpu_percent(interval=1)
+    logger.info(f"Celery worker memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
+    logger.info(f"Celery worker CPU usage: {cpu_usage:.2f}%")
