@@ -17,9 +17,19 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: celery -A access_key_manager worker --loglevel=info
+        envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: access_key_manager.settings
+      - key: PORT
+        value: 8000
 
   - type: worker
     name: celery-beat
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: celery -A access_key_manager beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: access_key_manager.settings
+      - key: PORT
+        value: 8000
