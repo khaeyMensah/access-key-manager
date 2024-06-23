@@ -1,12 +1,20 @@
 services:
   - type: web
-    name: access-key-manager
+    name: mfocusmanager
     env: python
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
     startCommand: gunicorn access_key_manager.wsgi:application
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: access_key_manager.settings
+      - name: PORT
+        value: 8000
     postdeploy:
       - python manage.py migrate
       - python manage.py assign_permissions
+
+  - type: worker
+    name: my-celery-worker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A access_key_manager worker --loglevel=info
