@@ -3,7 +3,7 @@ services:
     name: mfocusmanager
     env: python
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: supervisord -c Supervisord.conf
+    startCommand: supervisord -c Supervisord.conf -n
     plan: free
     autoDeploy: true
     envVars:
@@ -11,7 +11,7 @@ services:
         value: 10000
       - key: DATABASE_URL
         fromDatabase:
-          name: access-key-manager-db
+          name: mfocus-manager-db
           property: connectionString
       - key: REDIS_URL
         fromService:
