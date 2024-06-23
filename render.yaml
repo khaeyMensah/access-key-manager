@@ -3,7 +3,7 @@ services:
     name: mfocusmanager
     env: python
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: gunicorn access_key_manager.wsgi:application
+    startCommand: gunicorn access_key_manager.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: access_key_manager.settings
@@ -11,10 +11,15 @@ services:
         value: 8000
     postdeploy:
       - python manage.py migrate
-      - python manage.py assign_permissions
 
   - type: worker
-    name: my-celery-worker
+    name: celery-worker
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: celery -A access_key_manager worker --loglevel=info
+
+  - type: worker
+    name: celery-beat
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A access_key_manager beat --loglevel=info
