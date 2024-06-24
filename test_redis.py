@@ -2,6 +2,24 @@ import redis
 from django.conf import settings
 
 def test_redis_connection():
+    """
+    This function tests the connection to the Redis server using the provided URL in the Django settings.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+
+    Raises:
+    redis.ConnectionError: If the connection to the Redis server fails.
+
+    Example:
+    ```
+    test_redis_connection()
+    ```
+
+    """
     try:
         r = redis.from_url(settings.REDIS_URL)
         r.ping()

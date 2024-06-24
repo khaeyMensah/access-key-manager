@@ -55,28 +55,31 @@
     {% endif %}
     </div>    
 
+    <!-- Key Logs Section -->
     <div class="mt-4">
       <button id="toggle-log" class="btn btn-info">View Logs</button>
       <div id="key-log">
         <h2>Key Logs</h2>
-        <table class="table table-hover mt-3">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Action</th>
-              <th>Timestamp</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for log in key_logs %}
+        <div class="table-responsive">
+          <table class="table table-hover mt-3">
+            <thead class="table-dark">
               <tr>
-                <td>{{ log.user.get_full_name }}</td>
-                <td>{{ log.action }}</td>
-                <td>{{ log.timestamp }}</td>
+                <th>User</th>
+                <th>Action</th>
+                <th>Timestamp</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="table-group-divider">
+              {% for log in key_logs %}
+                <tr>
+                  <td>{{ log.user.get_full_name }}</td>
+                  <td>{{ log.action }}</td>
+                  <td>{{ log.timestamp }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
       <a href="{% url 'logout' %}" class="btn btn-secondary mt-3">Logout</a>
     </div>

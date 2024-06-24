@@ -1,4 +1,3 @@
-import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 from users.models import School, User
@@ -14,6 +13,10 @@ def validate_active_key(access_key):
 
     Raises:
         ValidationError: If the school already has an active access key.
+        
+    Example:
+        >>> key = AccessKey(school=school, status='active')
+        >>> validate_active_key(key)
     """
     school = access_key.school
     active_keys = school.access_keys.filter(status='active')

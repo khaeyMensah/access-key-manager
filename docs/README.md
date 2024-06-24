@@ -4,35 +4,93 @@
 
 ## Project Overview
 
-Micro-Focus Inc., a software company, has built a school management platform that is multitenant, allowing various schools to set up on the platform as though it was built specifically for them. They have decided to monetize it using an access key-based approach rather than building payment features into the school software. Micro-Focus Inc. has outsourced the project to build a key manager, a web application that schools can use to purchase access keys to activate their school account.
+Access Key Manager is a web application developed for Micro-Focus Inc. to manage access keys for their multitenant school management platform. It allows schools to purchase and manage access keys to activate their accounts.
 
-## Customer Requirements
+## Features
 
 ### School IT Personnel
 
-1. Signup & Login with email and password, with account verification and password reset feature.
-2. View a list of all access keys granted: active, expired, or revoked.
-3. For each access key, see the status, date of procurement, and expiry date.
-4. Restriction: Only one active key at a time.
+- Account management (signup, login, email verification, password reset)
+- View all granted access keys (active, expired, revoked)
+- See key details (status, procurement date, expiry date)
+- One active key limit per user
 
 ### Micro-Focus Admin
 
-1. Login with email and password.
-2. Manually revoke a key.
-3. View all keys generated on the platform with their status, date of procurement, and expiry date.
-4. API endpoint to check active key status given a school email.
+- Secure login
+- Manually revoke keys
+- View all generated keys and their details
+- API endpoint to check active key status for a given school email
 
-## Deliverables
+## Technologies Used
 
-1. Web application source code (GitHub)
-2. ER diagram of database design
-3. Deployed link
+- Django 5.0.6
+- Python 3.10+
+- PostgreSQL (for production)
+- Paystack (for payment processing)
+- Celery (for background tasks)
+
+## Project Structure
+
+Our project consists of the following main Django apps:
+
+- `users`: Handles user authentication, profiles, and billing information
+- `access_keys`: Manages the creation, distribution, verification, and payment processing of access keys
+
+## Data Models
+
+### User Model (users app)
+
+- Custom user model extending AbstractUser
+- Additional fields: is_school_personnel, is_admin, school, staff_id
+
+### School Model (users app)
+
+- Represents a school with a name field
+
+### BillingInformation Model (users app)
+
+- Stores billing information for users
+- Fields: payment method, mobile money number, card details
+
+### AccessKey Model (access_keys app)
+
+- Represents an access key for a school
+- Fields: key, school, status, assigned_to, procurement_date, expiry_date, revoked_by, revoked_on, price
+
+### KeyLog Model (access_keys app)
+
+- Logs actions performed on access keys
+- Fields: action, user, access_key, timestamp
+
+## API Endpoints
+
+### Check Key Status
+
+- Endpoint: `/access-keys/api/status/<email>/`
+- Method: GET
+- Description: Checks the status of an active access key for a given user email
+- Response:
+  - 200 OK: Returns active key details if found
+  - 404 Not Found: If no active key is found for the given email
+
+## Background Tasks
+
+### update_key_statuses
+
+- Periodically checks and updates the status of access keys
+- Expires keys that have reached their expiry date
+- Schedules the next run based on upcoming expiries
+
+### monitor_memory
+
+- Monitors the memory and CPU usage of the Celery worker
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.10
+- Python 3.10+
 - Django 5.0.6
 - pip
 
@@ -41,7 +99,7 @@ Micro-Focus Inc., a software company, has built a school management platform tha
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/access-key-manager.git
+   git clone https://github.com/khaeyMensah/access-key-manager.git
    cd access-key-manager
    ```
 
@@ -62,11 +120,21 @@ Micro-Focus Inc., a software company, has built a school management platform tha
    Create a `.env` file in the root directory and add the following:
 
    ```plaintext
-   SECRET_KEY=your_secret_key
-   DEBUG=True
-   ALLOWED_HOSTS=127.0.0.1,localhost
-   EMAIL_HOST_USER=your-email@example.com
-   EMAIL_HOST_PASSWORD=your-email-password
+   SECRET_KEY = your_secret_key
+   DEBUG = True
+   ALLOWED_HOSTS = localhost, 127.0.0.1
+   CSRF_TRUSTED_ORIGINS = http://localhost, http://127.0.0.1, https://your-deployed-url
+   EMAIL_BACKEND = django.core.mail.backends.smtp.EmailBackend
+   EMAIL_HOST = smtp.gmail.com
+   EMAIL_PORT = 587
+   EMAIL_USE_TLS = True
+   EMAIL_HOST_USER = your-email@gmail.com
+   EMAIL_HOST_PASSWORD = your-app-password
+   DEFAULT_FROM_EMAIL = your-email@gmail.com
+   PAYSTACK_PUBLIC_KEY = your_paystack_public_key
+   PAYSTACK_SECRET_KEY = your_paystack_secret_key
+   CALLBACK_URL = https://your-url/access-keys/paystack/callback/
+   DJANGO_SETTINGS_MODULE = access_key_manager.settings
    ```
 
 5. **Apply migrations**
@@ -87,54 +155,53 @@ Micro-Focus Inc., a software company, has built a school management platform tha
    python manage.py runserver
    ```
 
-8. **Access the application**
-   Open your browser and navigate to `http://127.0.0.1:8000/`
-
 ## Usage
 
-### Register a User
+1. Register as School Personnel or Admin
+2. Complete your profile after email verification
+3. Manage access keys (Admin only)
+4. Use API endpoint /access-keys/api/status/<email>/ to check key status
 
-1. Navigate to the registration page.
-2. Choose either "Register as School Personnel" or "Register as Admin".
-3. Complete the registration form and submit.
+## Testing
 
-### Complete Profile
+To run the test suite:
 
-1. After registration and email verification, log in to the application.
-2. Admin users will be redirected to complete their profile if not already done.
-3. Fill in the necessary details (first name, last name, staff ID).
+```bash
+python manage.py test
+```
 
-### Access Key Management
+## Contribution Guidelines
 
-1. Admins can manage access keys from the admin dashboard.
-2. To check the status of an access key, use the API endpoint `/access-keys/api/status/<email>/`.
+1. Fork the repository
+2. Create a new branch for your feature
+3. Make your changes and write tests if applicable
+4. Submit a pull request with a clear description of your changes
+
+## Troubleshooting
+
+- If you encounter email sending issues, ensure your Gmail account is set up for less secure apps or use an App Password.
+- For Paystack integration issues, verify your public and secret keys.
+- If Celery tasks are not running, check your Celery and Redis configurations.
+
+## Security Considerations
+
+- Always use environment variables for sensitive information.
+- Keep the DEBUG setting to False in production.
+- Regularly update dependencies to patch security vulnerabilities.
+- Ensure that only authorized users can access admin functionalities.
 
 ## Diagrams
 
-### ER Diagram
-
-The following diagram illustrates the entity relationships in the Access Key Manager database:
+### Database Design
 
 ![ER Diagram](/docs/ER_diagram.png)
 
-### Use Case Diagram
+## Deployment
 
-The following diagram illustrates the use cases and interactions for the Access Key Manager application:
-
-![Use Case Diagram](/docs/use_case_diagram.png)
-
-### Class Diagram
-
-The following diagram illustrates the main classes and their relationships in the Access Key Manager application:
-
-![Class Diagram](/docs/class_diagram.png)
+- [Deployed Application Link](https://mfocusmanager.onrender.com)
 
 ## License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
-
-## Deployment
-
-- [Deployed Application Link](#)
 
 ...

@@ -6,10 +6,22 @@ from users.models import User
 from celery.utils.log import get_task_logger
 import psutil
 
+"""
+Celery tasks for managing access keys and monitoring worker resources.
+"""
+
 logger = get_task_logger(__name__)
 
 @shared_task
 def update_key_statuses():
+    """
+    Update the status of expired access keys and schedule the next run.
+
+    This task checks for expired access keys and updates their status to 'expired'. It also logs the expiration event and schedules the next run based on upcoming expiries.
+
+    Returns:
+        str: A message indicating the completion of the task, including the number of expired keys.
+    """
     now = timezone.now()
     logger.info(f"Running update_key_statuses at {now}")
 
@@ -19,7 +31,7 @@ def update_key_statuses():
     logger.info(f"Found {expired_count} expired keys")
 
     system_user = User.objects.filter(is_superuser=True).first()
-    
+
     if not system_user:
         logger.error('No admin user found. Please create an admin user.')
         return
@@ -46,7 +58,7 @@ def update_key_statuses():
             # Schedule for the start of the next expiry day
             next_run = datetime.combine(next_expiry.expiry_date, time.min)
             next_run = timezone.make_aware(next_run)
-        
+
         logger.info(f"Scheduling next run at {next_run}")
         update_key_statuses.apply_async(eta=next_run)
     else:
@@ -56,6 +68,14 @@ def update_key_statuses():
 
 @shared_task
 def monitor_memory():
+    """
+    Monitor the memory and CPU usage of the Celery worker.
+
+    This task uses the psutil library to retrieve the memory and CPU usage of the Celery worker process and logs the information.
+
+    Returns:
+        None
+    """
     process = psutil.Process()
     memory_info = process.memory_info()
     cpu_usage = process.cpu_percent(interval=1)

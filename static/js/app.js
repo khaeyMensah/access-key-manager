@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
+  // Toggle log visibility functionality
   var toggleLogButton = document.getElementById("toggle-log");
   var keyLog = document.getElementById("key-log");
 
+  // Check if elements exist before adding event listeners
   toggleLogButton.addEventListener("click", function () {
     if (keyLog.style.maxHeight) {
       keyLog.style.maxHeight = null;
@@ -14,18 +16,21 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Paystack integration
   var paystackPublicKey = PAYSTACK_PUBLIC_KEY; // Set in template
   var userEmail = USER_EMAIL; // Set in template
   var accessKeyPrice = ACCESS_KEY_PRICE; // Set in template
   var callbackUrl = CALLBACK_URL; // Set in template
   var userID = USER_ID; // Set in template
 
-  console.log("Paystack Public Key:", paystackPublicKey); // Debugging statement
-  console.log("User Email:", userEmail); // Debugging statement
-  console.log("Access Key Price:", accessKeyPrice); // Debugging statement
-  console.log("Callback URL:", callbackUrl); // Debugging statement
-  console.log("User ID:", userID); // Debugging statement
+  // Debugging statements
+  console.log("Paystack Public Key:", paystackPublicKey);
+  console.log("User Email:", userEmail);
+  console.log("Access Key Price:", accessKeyPrice);
+  console.log("Callback URL:", callbackUrl);
+  console.log("User ID:", userID);
 
+  // Get payment method dropdown and fields
   const paymentMethodField = document.querySelector(
     'select[name="payment_method"]'
   );
@@ -33,12 +38,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const momoFields = document.getElementById("momo-fields");
   const paystackBtn = document.getElementById("paystack-button");
 
+  // Function to clear input fields
   function clearFields(fields) {
     fields.querySelectorAll("input").forEach(function (input) {
       input.value = "";
     });
   }
 
+  // Function to toggle payment method fields
   function toggleFields() {
     if (paymentMethodField.value === "card") {
       cardFields.style.display = "";
@@ -54,9 +61,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  paymentMethodField.addEventListener("change", toggleFields);
-  toggleFields();
+  // Add event listener for payment method change
+  if (paymentMethodField) {
+    paymentMethodField.addEventListener("change", toggleFields);
+    toggleFields();
+  }
 
+  // Add event listener for Paystack button
   if (paystackBtn) {
     paystackBtn.addEventListener("click", function (e) {
       e.preventDefault();
@@ -77,6 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
           ],
         },
 
+        // Callback function for successful payment
         callback: function (response) {
           // Log the reference for debugging
           console.log("Payment reference:", response.reference);
@@ -85,11 +97,13 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href =
             callbackUrl + "?reference=" + response.reference;
         },
+        // Function for handling closed payment window
         onClose: function () {
           alert("Payment window closed.");
         },
       });
 
+      // Open Paystack payment window
       handler.openIframe();
     });
   } else {

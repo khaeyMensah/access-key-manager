@@ -10,6 +10,7 @@
 
 {% block body %}
   <div class="container">
+    <!-- Authentication Logo and Title -->
     <div class="auth-logo">
       <h1 class="text-center my-2">
         <a href="{% url 'home' %}">Access Key Manager</a>
@@ -19,6 +20,7 @@
       </div>
     </div>
 
+    <!-- Content Container -->
     <div class="container-fluid">
       {% block content %}
       {% endblock %}
