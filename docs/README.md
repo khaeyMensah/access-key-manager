@@ -198,6 +198,53 @@ python manage.py test
 
 ## Deployment
 
+This project is configured for deployment on Render using Supervisor to manage multiple processes.
+
+### Deployment Configuration
+
+The deployment is defined in `render.yaml`:
+
+- Web service: Python environment
+- Database: PostgreSQL
+- Redis: For Celery task queue
+
+### Process Management
+
+We use Supervisor to manage multiple processes:
+
+1. Gunicorn: Web server for Django application
+2. Celery Worker: For asynchronous task processing
+3. Celery Beat: For scheduled tasks
+
+The Supervisor configuration is defined in `Supervisord.conf`.
+
+### Deployment Steps
+
+1. Ensure your code is pushed to the GitHub repository connected to Render.
+2. Render will automatically deploy updates to the `main` branch.
+3. The deployment process includes:
+   - Installing dependencies from `requirements.txt`
+   - Collecting static files
+   - Running database migrations
+   - Starting Supervisor to manage Gunicorn and Celery processes
+
+### Environment Variables
+
+Key environment variables are set in the Render dashboard or `render.yaml`:
+
+- `PORT`: Set to 10000
+- `DATABASE_URL`: Automatically set by Render
+- `REDIS_URL`: Automatically set by Render
+- `DJANGO_SECRET_KEY`: Automatically generated
+- `DJANGO_SETTINGS_MODULE`: Set to `access_key_manager.settings`
+
+### Monitoring
+
+- Logs for all processes are streamed to stdout/stderr and can be viewed in the Render dashboard.
+- Each process (Gunicorn, Celery worker, Celery beat) can be monitored independently through Supervisor.
+
+For more detailed information about the deployment process, refer to the `render.yaml` and `Supervisord.conf` files in the project repository.
+
 - [Deployed Application Link](https://mfocusmanager.onrender.com)
 
 ## License
