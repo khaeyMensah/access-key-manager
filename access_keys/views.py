@@ -50,7 +50,7 @@ def purchase_access_key_view(request):
     billing_info = getattr(request.user, 'billing_information', None)
 
     if request.method == 'POST':
-        form = BillingInformationForm(request.POST, instance=billing_info, user=request.user)
+        form = BillingInformationForm(request.POST, instance=billing_info)
         if form.is_valid():
             if form.cleaned_data.get('confirm_purchase'):
                 billing_info = form.save(commit=False)
@@ -66,7 +66,7 @@ def purchase_access_key_view(request):
             print("Form errors:", form.errors)  # Debugging
             messages.error(request, 'Please provide valid billing information.')
     else:
-        form = BillingInformationForm(instance=billing_info, user=request.user)
+        form = BillingInformationForm(instance=billing_info)
 
     context = common_context_data(request)
     context.update({
