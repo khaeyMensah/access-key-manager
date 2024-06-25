@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   // Toggle log visibility functionality
-  var toggleLogButton = document.getElementById("toggle-log");
-  var keyLog = document.getElementById("key-log");
+  const toggleLogButton = document.getElementById("toggle-log");
+  const keyLog = document.getElementById("key-log");
 
   // Check if elements exist before adding event listeners
   if (toggleLogButton && keyLog) {
@@ -19,10 +19,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
   // Paystack integration
-  var paystackPublicKey = PAYSTACK_PUBLIC_KEY; // Set in template
-  var userEmail = USER_EMAIL; // Set in template
-  var accessKeyPrice = ACCESS_KEY_PRICE; // Set in template
-  var callbackUrl = CALLBACK_URL; // Set in template
+  const paystackPublicKey = PAYSTACK_PUBLIC_KEY; // Set in template
+  const userEmail = USER_EMAIL; // Set in template
+  const accessKeyPrice = ACCESS_KEY_PRICE; // Set in template
+  const callbackUrl = CALLBACK_URL; // Set in template
 
   // Get payment method dropdown and fields
   const paymentMethodField = document.querySelector(
@@ -30,8 +30,9 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   const cardFields = document.getElementById("card-fields");
   const momoFields = document.getElementById("momo-fields");
-  const paystackBtn = document.getElementById("paystack-button");
-  // const form = document.querySelector("form");
+  const paystackBtn = document.getElementById(
+    "{{ PAYSTACK_SETTINGS.BUTTON_ID }}"
+  );
 
   // Function to clear input fields
   function clearFields(fields) {
@@ -68,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
       e.preventDefault();
 
       // Initialize payment using Paystack Inline
-      var handler = PaystackPop.setup({
+      const handler = PaystackPop.setup({
         key: paystackPublicKey, // Set in template
         email: userEmail, // Set in template
         amount: accessKeyPrice * 100, // Convert to Pesewas

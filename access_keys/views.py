@@ -56,14 +56,11 @@ def purchase_access_key_view(request):
                 billing_info = form.save(commit=False)
                 billing_info.user = request.user
                 billing_info.save()
-                request.POST = request.POST.copy()
-                request.POST['user_id'] = request.user.id
                 return redirect('access_keys:initialize_payment')
 
             else:
                 messages.error(request, 'You must confirm the purchase to proceed.')
         else:
-            print("Form errors:", form.errors)  # Debugging
             messages.error(request, 'Please provide valid billing information.')
     else:
         form = BillingInformationForm(instance=billing_info)
@@ -101,7 +98,7 @@ def initialize_payment(request):
             messages.error(request, 'Billing information is missing.')
             return redirect('access_keys:purchase_access_key')
 
-        email = user.email
+        # email = user.email
         base_url = settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')
         callback_url = f"{settings.PAYSTACK_SETTINGS['CALLBACK_URL']}"
 
@@ -111,12 +108,12 @@ def initialize_payment(request):
             'Content-Type': 'application/json',
         }
         data = {
-            'email': email,
+            'email': billing_info.email,
             'amount': int(settings.ACCESS_KEY_PRICE * 100),
             'currency': 'GHS',
             'callback_url': callback_url,
         }
-
+        
         try:
             response = requests.post(url, headers=headers, json=data)
             response.raise_for_status()
@@ -179,7 +176,7 @@ def paystack_callback(request):
 
         if result['status']:
             # Payment was successful
-            amount = result['data']['amount'] / 100
+            amount = result['data']['amount'] / 100     # Convert from pesewas to your Cedis
             email = result['data']['customer']['email']
 
             if not email:
