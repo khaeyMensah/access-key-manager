@@ -20,6 +20,27 @@ class RegistrationForm(UserCreationForm):
         model = User
         fields = ('username', 'email', 'password1', 'password2')
 
+
+    def clean_email(self):
+        """
+    
+        Validates the email field and raises a ValidationError if it's already registered.
+
+        Args:
+            self (RegistrationForm): An instance of the RegistrationForm class.
+
+        Returns:
+            email (str): The validated email address.
+
+        Raises:
+            ValidationError: If the email address is already registered.
+        """
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("This email is already registered.")
+        return email
+
+
     def save(self, commit=True):
         """
         Saves the user instance with the provided email and sets the user's is_active flag to False.
@@ -133,29 +154,9 @@ class BillingInformationForm(forms.ModelForm):
     
     class Meta:
         model = BillingInformation
-        fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv', 'user_id']
+        fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initializes the form with the provided arguments.
 
-        Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Raises:
-            ValueError: If 'user' keyword argument is not provided.
-
-        Returns:
-            None: This method does not return any value.
-
-        Additional Information:
-            - If a 'user' object is provided, it sets the 'user_id' field's initial value to the 'user' object's id.
-        """
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            self.fields['user_id'].initial = user.id
 
     def clean_card_expiry(self):
         """

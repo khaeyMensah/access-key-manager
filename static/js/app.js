@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", function () {
   var userEmail = USER_EMAIL; // Set in template
   var accessKeyPrice = ACCESS_KEY_PRICE; // Set in template
   var callbackUrl = CALLBACK_URL; // Set in template
-  var userID = USER_ID; // Set in template
 
   // Debugging statements
   console.log("Paystack Public Key:", paystackPublicKey);
@@ -78,15 +77,6 @@ document.addEventListener("DOMContentLoaded", function () {
         email: userEmail, // Set in template
         amount: accessKeyPrice * 100, // Convert to Pesewas
         currency: "GHS",
-        metadata: {
-          custom_fields: [
-            {
-              display_name: "User ID",
-              variable_name: "user_id",
-              value: userID,
-            },
-          ],
-        },
 
         // Callback function for successful payment
         callback: function (response) {

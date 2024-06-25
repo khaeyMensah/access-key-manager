@@ -15,7 +15,6 @@
           </div>
           <form method="post" novalidate>
             {% csrf_token %}
-            {{ form.user_id|as_crispy_field }}
             {{ form.email|as_crispy_field }}
             {{ form.payment_method|as_crispy_field }}
             <!-- Card fields, hidden initially -->
@@ -49,6 +48,5 @@
   var USER_EMAIL = "{{ user.email }}";
   var ACCESS_KEY_PRICE = {{ access_key_price }};
   var CALLBACK_URL = "{{ PAYSTACK_SETTINGS.CALLBACK_URL }}";
-  var USER_ID = "{{ request.user.id }}";
 </script>
 {% endblock %}

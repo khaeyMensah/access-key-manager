@@ -109,17 +109,27 @@ def registration_options_view(request):
 
 def register_view(request, user_type):
     """
-    This function handles the registration process for different user types.
+    Handles the registration process for new users.
 
     Args:
         request: The HTTP request object.
-        user_type: The type of user being registered (e.g., 'school_personnel', 'admin').
+        user_type: The type of user being registered, either 'school_personnel' or 'admin'.
 
     Returns:
         A rendered HTML response containing the registration form.
 
     Raises:
-        Redirect: If the request method is not POST.
+        ValueError: If the provided user_type is not 'school_personnel' or 'admin'.
+
+    The function first checks if the request method is POST. If it is, it creates a new instance 
+    of the RegistrationForm with the provided POST data. If the form is valid, it creates a new user object, 
+    sets its is_active attribute to False, and sets its is_school_personnel or is_admin attribute based on 
+    the provided user_type. The user object is then saved to the database. After that, the function sends a 
+    verification email to the newly registered user using the send_verification_email function. Finally, 
+    it sets a success message and redirects to the registration_pending page. If the request method is not POST, 
+    the function simply creates a new instance of the RegistrationForm and renders it along with the registration 
+    form HTML template.
+
     """
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -134,6 +144,10 @@ def register_view(request, user_type):
             send_verification_email(request, user)
             messages.success(request, 'Registration successful. Please confirm your email.')
             return redirect('registration_pending')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.capitalize()}: {error}")
     else:
         form = RegistrationForm()
     return render(request, 'accounts/register.html', {'form': form})
@@ -189,7 +203,7 @@ def activate(request, uidb64, token):
 
 def login_view(request):
     """
-    This function handles the user login  by rendering the login form and authenticating users.
+    Handles the user login  by rendering the login form and authenticating users.
 
     Args:
         request: The HTTP request object.
@@ -230,7 +244,7 @@ def logout_view(request):
 @login_required
 def profile_view(request):
     """
-    This function renders the user profile page.
+    Renders the user profile page.
 
     Args:
         request: The HTTP request object.
@@ -256,7 +270,7 @@ def profile_view(request):
 @login_required
 def complete_profile_view(request):
     """
-    This function handles the completion of the user's profile.
+    Handles the completion of the user's profile.
 
     Args:
         request: The HTTP request object.
@@ -303,7 +317,7 @@ def complete_profile_view(request):
 @login_required
 def update_profile_view(request):
     """
-    This function handles the update of the user's profile.
+    Handles the update of the user's profile.
 
     Args:
         request: The HTTP request object.
@@ -332,7 +346,7 @@ def update_profile_view(request):
 @login_required
 def billing_information_view(request):
     """
-    This function renders the user's billing information page.
+    Renders the user's billing information page.
 
     Args:
         request: The HTTP request object.
@@ -356,7 +370,7 @@ def billing_information_view(request):
 @login_required
 def update_billing_information_view(request):
     """
-    This function handles the update of the user's billing information.
+    Handles the update of the user's billing information.
 
     Args:
         request: The HTTP request object.

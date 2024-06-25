@@ -1,6 +1,6 @@
 from celery import shared_task
 from django.utils import timezone
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 from access_keys.models import AccessKey, KeyLog
 from users.models import User 
 from celery.utils.log import get_task_logger
@@ -26,7 +26,7 @@ def update_key_statuses():
     logger.info(f"Running update_key_statuses at {now}")
 
     # Check and update expired keys
-    expired_keys = AccessKey.objects.filter(expiry_date__lte=now.date(), status='active')
+    expired_keys = AccessKey.objects.filter(expiry_date__lte=now, status='active')
     expired_count = expired_keys.count()
     logger.info(f"Found {expired_count} expired keys")
 
@@ -47,22 +47,16 @@ def update_key_statuses():
         )
 
     # Schedule next run based on upcoming expiries
-    next_expiry = AccessKey.objects.filter(expiry_date__gt=now.date(), status='active').order_by('expiry_date').first()
+    next_expiry = AccessKey.objects.filter(expiry_date__gt=now, status='active').order_by('expiry_date').first()
 
     if next_expiry:
-        time_until_next_expiry = next_expiry.expiry_date - now.date()
-        if time_until_next_expiry.days == 0:
-            # If next expiry is today, check again in an hour
-            next_run = now + timedelta(hours=1)
-        else:
-            # Schedule for the start of the next expiry day
-            next_run = datetime.combine(next_expiry.expiry_date, time.min)
-            next_run = timezone.make_aware(next_run)
-
+        next_run = next_expiry.expiry_date
         logger.info(f"Scheduling next run at {next_run}")
         update_key_statuses.apply_async(eta=next_run)
     else:
+        next_run = now + timedelta(hours=1)
         logger.info("No upcoming expiries. Next check will be in 1 hour.")
+        update_key_statuses.apply_async(eta=next_run)
 
     return f"Update completed. Expired {expired_count} keys."
 

@@ -7,6 +7,7 @@ class User(AbstractUser):
     Custom user model that extends AbstractUser with additional fields.
 
     Attributes:
+        email (EmailField): The user's email address, which is unique.
         is_school_personnel (BooleanField): Indicates if the user is a school personnel.
         is_admin (BooleanField): Indicates if the user is an admin.
         school (ForeignKey): References the school the user is associated with.
@@ -19,6 +20,7 @@ class User(AbstractUser):
         is_profile_complete(self):
             Returns True if the user's profile is complete, i.e., they have a first name, last name, email, and either are an admin or a school personnel with a school affiliation.
     """
+    email = models.EmailField(unique=True)
     is_school_personnel = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True, related_name='users')

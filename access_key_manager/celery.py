@@ -22,16 +22,13 @@ app.conf.beat_schedule = {
         'schedule': schedule(run_every=timedelta(hours=1)),
         'options': {'expires': 3600}
     },
+    'monitor_memory': {
+        'task': 'access_keys.tasks.monitor_memory',
+        'schedule': schedule(run_every=timedelta(hours=1)),
+        'options': {'expires': 3600}
+    },
 }
 
-
-# app.conf.beat_schedule = {
-#     'update_key_statuses': {
-#         'task': 'access_keys.tasks.update_key_statuses',
-#         'schedule': crontab(),  # Run every minute
-#         # 'schedule': crontab(minute=0, hour=0),  # Run every day at midnight
-#     },
-# }
 
 @app.task(bind=True)
 def debug_task(self):

@@ -101,9 +101,7 @@ def initialize_payment(request):
             messages.error(request, 'Billing information is missing.')
             return redirect('access_keys:purchase_access_key')
 
-        # Retrieve user_id from the form data
-        user_id = request.POST.get('user_id')
-
+        email = user.email
         base_url = settings.PAYSTACK_SETTINGS.get('BASE_URL', 'https://api.paystack.co')
         callback_url = f"{settings.PAYSTACK_SETTINGS['CALLBACK_URL']}"
 
@@ -113,13 +111,10 @@ def initialize_payment(request):
             'Content-Type': 'application/json',
         }
         data = {
-            'email': billing_info.email,
+            'email': email,
             'amount': int(settings.ACCESS_KEY_PRICE * 100),
             'currency': 'GHS',
             'callback_url': callback_url,
-            'metadata': {
-                'user_id': user_id,
-            },
         }
 
         try:
@@ -160,7 +155,7 @@ def paystack_callback(request):
 
     If the reference parameter is supplied, the function constructs the URL for verifying the payment using the reference parameter and the Paystack settings. It then sends a GET request to the Paystack API with the necessary headers and retrieves the payment verification result.
 
-    If the payment verification result is successful, the function extracts the user ID from the transaction metadata, retrieves the corresponding User and School objects, creates a new AccessKey object, logs the action in the KeyLog model, and sends an email notification to the user. Finally, it returns an HttpResponse with a success message and redirects to the school dashboard.
+    If the payment verification result is successful, the function retrieves the corresponding User and School objects, creates a new AccessKey object, logs the action in the KeyLog model, and sends an email notification to the user. Finally, it returns an HttpResponse with a success message and redirects to the school dashboard.
 
     If the payment verification result is not successful, the function returns an HttpResponse with an error message and redirects to the school dashboard.
 
@@ -185,16 +180,12 @@ def paystack_callback(request):
         if result['status']:
             # Payment was successful
             amount = result['data']['amount'] / 100
-            metadata = result['data'].get('metadata', {})
-            user_id = metadata.get('custom_fields', [{}])[0].get('value')  # Correct extraction of user_id
-            
-            if not user_id:
-                return HttpResponse('User ID not found in transaction metadata', status=400)
+            email = result['data']['customer']['email']
 
-            try:
-                user = get_object_or_404(User, id=user_id)
-            except User.DoesNotExist:
-                return HttpResponse(f'User with ID {user_id} not found in database', status=400)
+            if not email:
+                return HttpResponse('Email not found', status=400)
+            
+            user = get_object_or_404(User, email=email)
             school = get_object_or_404(School, users=user)
 
             # Create access key
