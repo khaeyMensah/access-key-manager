@@ -150,13 +150,10 @@ class BillingInformationForm(forms.ModelForm):
     payment_method = forms.ChoiceField(choices=[('', 'Select a payment method')] + BillingInformation.PAYMENT_METHODS, required=True, label='Payment Method')
     card_expiry = forms.CharField(required=False, label='Card Expiry', widget=forms.TextInput(attrs={'placeholder': 'mm/yy'}))
     confirm_purchase = forms.BooleanField(required=True, initial=False, label='Confirm purchase')
-    user_id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     
     class Meta:
         model = BillingInformation
         fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
-
-
 
     def clean_card_expiry(self):
         """

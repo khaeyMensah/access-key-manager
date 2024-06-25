@@ -4,15 +4,17 @@ document.addEventListener("DOMContentLoaded", function () {
   var keyLog = document.getElementById("key-log");
 
   // Check if elements exist before adding event listeners
-  toggleLogButton.addEventListener("click", function () {
-    if (keyLog.style.maxHeight) {
-      keyLog.style.maxHeight = null;
-      toggleLogButton.textContent = "View Logs";
-    } else {
-      keyLog.style.maxHeight = keyLog.scrollHeight + "px";
-      toggleLogButton.textContent = "Hide Logs";
-    }
-  });
+  if (toggleLogButton && keyLog) {
+    toggleLogButton.addEventListener("click", function () {
+      if (keyLog.style.maxHeight) {
+        keyLog.style.maxHeight = null;
+        toggleLogButton.textContent = "View Logs";
+      } else {
+        keyLog.style.maxHeight = keyLog.scrollHeight + "px";
+        toggleLogButton.textContent = "Hide Logs";
+      }
+    });
+  }
 });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -22,13 +24,6 @@ document.addEventListener("DOMContentLoaded", function () {
   var accessKeyPrice = ACCESS_KEY_PRICE; // Set in template
   var callbackUrl = CALLBACK_URL; // Set in template
 
-  // Debugging statements
-  console.log("Paystack Public Key:", paystackPublicKey);
-  console.log("User Email:", userEmail);
-  console.log("Access Key Price:", accessKeyPrice);
-  console.log("Callback URL:", callbackUrl);
-  console.log("User ID:", userID);
-
   // Get payment method dropdown and fields
   const paymentMethodField = document.querySelector(
     'select[name="payment_method"]'
@@ -36,6 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const cardFields = document.getElementById("card-fields");
   const momoFields = document.getElementById("momo-fields");
   const paystackBtn = document.getElementById("paystack-button");
+  // const form = document.querySelector("form");
 
   // Function to clear input fields
   function clearFields(fields) {
@@ -80,9 +76,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Callback function for successful payment
         callback: function (response) {
-          // Log the reference for debugging
-          console.log("Payment reference:", response.reference);
-
           // Redirect to callback URL with reference
           window.location.href =
             callbackUrl + "?reference=" + response.reference;
