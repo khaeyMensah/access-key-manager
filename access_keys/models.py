@@ -36,8 +36,8 @@ class AccessKey(models.Model):
         school (ForeignKey):  References the school that this access key belongs to.
         status (CharField): The current status of the access key.
         assigned_to (ForeignKey): The user to whom this access key is assigned.
-        procurement_date (DateField): The date when this access key was procured.
-        expiry_date (DateField): The date when this access key expires.
+        procurement_date (DateTimeField): The date when this access key was procured.
+        expiry_date (DateTimeField): The date when this access key expires.
         revoked_by (ForeignKey): The user who revoked this access key.
         revoked_on (DateTimeField): The date and time when this access key was revoked.
         price (DecimalField): The price of this access key.
@@ -52,8 +52,8 @@ class AccessKey(models.Model):
                                validators=[validate_active_key])
 
     assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='access_keys')
-    procurement_date = models.DateField(auto_now_add=True)
-    expiry_date = models.DateField()
+    procurement_date = models.DateTimeField(auto_now_add=True)
+    expiry_date = models.DateTimeField()
     revoked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='revoked_access_keys')
     revoked_on = models.DateTimeField(null=True, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
