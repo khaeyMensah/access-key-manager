@@ -1,8 +1,12 @@
+import logging
 import re
 from django.core.exceptions import ValidationError
 from django import forms
 from users.models import BillingInformation, School, User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+
+
+logger = logging.getLogger(__name__)
 
 class RegistrationForm(UserCreationForm):
     """
@@ -37,6 +41,7 @@ class RegistrationForm(UserCreationForm):
         """
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
+            logger.warning(f"Attempted registration with existing email: {email}")
             raise ValidationError("This email is already registered.")
         return email
 
@@ -56,6 +61,7 @@ class RegistrationForm(UserCreationForm):
         user.is_active = False
         if commit:
             user.save()
+            logger.info(f"New user registered with email: {user.email}")
         return user
 
 
@@ -115,7 +121,7 @@ class ProfileForm(forms.ModelForm):
         email = cleaned_data.get('email')
         if not email:
             self.add_error('email', 'Please provide an email address.')
-
+            logger.error("Profile update failed due to missing email address")
         return cleaned_data
 
 
@@ -123,6 +129,7 @@ class ProfileUpdateForm(forms.ModelForm):
     """
     Form for updating user profile with basic fields.
     """
+
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name']
@@ -193,6 +200,7 @@ class BillingInformationForm(forms.ModelForm):
         """
         card_expiry = self.cleaned_data.get('card_expiry')
         if card_expiry and not re.match(r'^(0[1-9]|1[0-2])\/\d{2}$', card_expiry):
+            logger.error(f"Invalid card expiry date format: {card_expiry}")
             raise forms.ValidationError('Card expiry must be in mm/yy format.')
         return card_expiry
     
@@ -212,6 +220,7 @@ class BillingInformationForm(forms.ModelForm):
         """
         mobile_money_number = self.cleaned_data.get('mobile_money_number')
         if mobile_money_number and not re.match(r'^\d{10}$', mobile_money_number):
+            logger.error(f"Invalid mobile money number format: {mobile_money_number}")
             raise forms.ValidationError('Mobile Money Number must be 10 digits.')
         return mobile_money_number
 
@@ -239,18 +248,24 @@ class BillingInformationForm(forms.ModelForm):
         if payment_method == "card":
             if not card_number:
                 self.add_error('card_number', 'Card number is required.')
+                logger.error("Card payment method selected but card number is missing")
             if not card_expiry:
                 self.add_error('card_expiry', 'Card expiry date is required.')
+                logger.error("Card payment method selected but card expiry date is missing")
             if not card_cvv:
                 self.add_error('card_cvv', 'Card CVV is required.')
+                logger.error("Card payment method selected but card CVV is missing")
             if mobile_money_number:
                 self.add_error('mobile_money_number', 'MOMO number is not required for card payment.')
+                logger.error("Mobile money number provided for card payment method")
 
         elif payment_method == "mtn_momo":
             if not mobile_money_number:
                 self.add_error('mobile_money_number', 'MOMO number is required.')
+                logger.error("MOMO payment method selected but mobile money number is missing")
             if card_number or card_expiry or card_cvv:
                 self.add_error(None, 'Credit card details are not required for MOMO payment.')
+                logger.error("Credit card details provided for MOMO payment method")
 
         return cleaned_data
     
@@ -283,9 +298,10 @@ class UpdateBillingInformationForm(forms.ModelForm):
         """
         card_expiry = self.cleaned_data.get('card_expiry')
         if card_expiry and not re.match(r'^(0[1-9]|1[0-2])\/\d{2}$', card_expiry):
+            logger.error(f"Invalid card expiry date format: {card_expiry}")
             raise forms.ValidationError('Card expiry must be in mm/yy format.')
         return card_expiry
-
+    
     def clean(self):
         """
         Validates the form data and raises a ValidationError if any field fails validation.
@@ -310,18 +326,24 @@ class UpdateBillingInformationForm(forms.ModelForm):
         if payment_method == "card":
             if not card_number:
                 self.add_error('card_number', 'Card number is required.')
+                logger.error("Card payment method selected but card number is missing")
             if not card_expiry:
                 self.add_error('card_expiry', 'Card expiry date is required.')
+                logger.error("Card payment method selected but card expiry date is missing")
             if not card_cvv:
                 self.add_error('card_cvv', 'Card CVV is required.')
+                logger.error("Card payment method selected but card CVV is missing")
             if mobile_money_number:
                 self.add_error('mobile_money_number', 'MOMO number is not required for Card payment.')
+                logger.error("Mobile money number provided for card payment method")
 
         elif payment_method == "mtn_momo":
             if not mobile_money_number:
                 self.add_error('mobile_money_number', 'MOMO number is required.')
+                logger.error("MOMO payment method selected but mobile money number is missing")
             if card_number or card_expiry or card_cvv:
                 self.add_error(None, 'Credit card details are not required for MOMO payment.')
+                logger.error("Credit card details provided for MOMO payment method")
 
         return cleaned_data
     

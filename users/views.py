@@ -1,3 +1,4 @@
+import logging
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.sites.shortcuts import get_current_site
@@ -18,8 +19,7 @@ from django.contrib import messages
 from django.conf import settings
 
 
-
-
+logger = logging.getLogger(__name__)
 # Create your views here.
 def home(request):
     """
@@ -32,6 +32,7 @@ def home(request):
         A rendered HTML response containing the home page.
     """
     context = common_context_data(request)
+    logger.info("Rendering home page for user %s", request.user.username)
     return render(request, 'users/home.html', context)
 
 
@@ -49,13 +50,16 @@ def school_dashboard_view(request):
     """
     user = request.user
     if not user.is_profile_complete():
+        logger.warning("User %s attempted to access school dashboard without a complete profile.", user.username)
         messages.error(request, 'Please complete your profile to access the school dashboard.')
         return redirect('complete_profile')
 
     try:
         school = user.school
         access_keys = school.access_keys.order_by('-procurement_date')
+        logger.info("User %s accessed school dashboard.", user.username)
     except ObjectDoesNotExist:
+        logger.error("No school associated with user %s", user.username)
         messages.error(request, 'No school associated with your account. Please complete your profile.')
         return redirect('complete_profile')
 
@@ -80,11 +84,13 @@ def admin_dashboard_view(request):
     """
     user = request.user
     if not user.is_profile_complete():
+        logger.warning("User %s attempted to access admin dashboard without a complete profile.", user.username)
         messages.error(request, 'Please complete your profile to access the admin dashboard.')
         return redirect('complete_profile')
 
     access_keys = AccessKey.objects.order_by('-procurement_date')
     key_logs = KeyLog.objects.order_by('-timestamp')
+    logger.info("User %s accessed admin dashboard.", user.username)
 
     context = common_context_data(request)
     context.update({
@@ -96,7 +102,7 @@ def admin_dashboard_view(request):
 
 def registration_options_view(request):
     """
-    This function renders the registration options page, where users choose whether they are school personnel or admin.
+    Renders the registration options page, where users choose whether they are school personnel or admin.
 
     Args:
         request: The HTTP request object.
@@ -104,6 +110,7 @@ def registration_options_view(request):
     Returns:
         A rendered HTML response containing the registration options page.
     """
+    logger.info("Rendering registration options page.")
     return render(request, 'accounts/register_options.html')
 
 
@@ -113,23 +120,16 @@ def register_view(request, user_type):
 
     Args:
         request: The HTTP request object.
-        user_type: The type of user being registered, either 'school_personnel' or 'admin'.
+        user_type: The type of user being registered ('school_personnel' or 'admin').
 
     Returns:
-        A rendered HTML response containing the registration form.
+        A rendered HTML response containing the registration form or redirects on success.
 
     Raises:
-        ValueError: If the provided user_type is not 'school_personnel' or 'admin'.
+        ValueError: If the provided user_type is invalid.
 
-    The function first checks if the request method is POST. If it is, it creates a new instance 
-    of the RegistrationForm with the provided POST data. If the form is valid, it creates a new user object, 
-    sets its is_active attribute to False, and sets its is_school_personnel or is_admin attribute based on 
-    the provided user_type. The user object is then saved to the database. After that, the function sends a 
-    verification email to the newly registered user using the send_verification_email function. Finally, 
-    it sets a success message and redirects to the registration_pending page. If the request method is not POST, 
-    the function simply creates a new instance of the RegistrationForm and renders it along with the registration 
-    form HTML template.
-
+    The function processes the registration form, creates a new inactive user,
+    sets the appropriate user type, and sends a verification email.
     """
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -142,14 +142,17 @@ def register_view(request, user_type):
                 user.is_admin = True
             user.save()
             send_verification_email(request, user)
+            logger.info("Registration successful for user %s. Verification email sent.", user.username)
             messages.success(request, 'Registration successful. Please confirm your email.')
             return redirect('registration_pending')
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field.capitalize()}: {error}")
+            logger.warning("Registration form is invalid: %s", form.errors)
     else:
         form = RegistrationForm()
+    logger.info("Rendering registration form for %s user type.", user_type)
     return render(request, 'accounts/register.html', {'form': form})
 
 
@@ -171,11 +174,11 @@ def send_verification_email(request, user):
     })
     to_email = user.email
     send_mail(mail_subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
-
+    logger.info("Sent verification email to %s", to_email)
 
 def activate(request, uidb64, token):
     """
-    This function activates the user's account after clicking the verification link.
+    Activates the user's account after clicking the verification link.
 
     Args:
         request: The HTTP request object.
@@ -194,9 +197,11 @@ def activate(request, uidb64, token):
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
+        logger.info("User %s activated successfully.", user.username)
         messages.success(request, 'Your account has been activated successfully!')
         return redirect('activation_success')
     else:
+        logger.error("Activation link is invalid for user.")
         messages.error(request, 'Activation link is invalid!')
         return render(request, 'authentication/activation_invalid.html')
 
@@ -216,12 +221,15 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             auth_login(request, user)
+            logger.info("User %s logged in successfully.", user.username)
             messages.success(request, 'Login successful.')
             return redirect('home')
         else:
+            logger.warning("Login attempt failed for user.")
             messages.error(request, 'Login failed. Please check your credentials.')
     else:
         form = LoginForm()
+        logger.info("Rendering login page.")
     return render(request, 'accounts/login.html', {'form': form})
 
 
@@ -237,6 +245,7 @@ def logout_view(request):
         HttpResponse: Redirect to home page.
     """
     logout(request)
+    logger.info("User %s logged out successfully.", request.user.username)
     messages.success(request, 'Logout successful.')
     return redirect('home')
 
@@ -264,6 +273,7 @@ def profile_view(request):
         'user': user,
         'active_key': active_key,
     })
+    logger.info("Rendering profile page for user %s", user.username)
     return render(request, 'users/profile.html', context)
 
 
@@ -277,9 +287,6 @@ def complete_profile_view(request):
 
     Returns:
         A rendered HTML response containing the profile completion form.
-
-    Raises:
-        Redirect: If the user's profile is already complete.
     """
     user = request.user
 
@@ -295,12 +302,18 @@ def complete_profile_view(request):
             if user.is_admin and not user.staff_id:
                 user.staff_id = form.cleaned_data.get('staff_id')
             form.save()
+            logger.info("Profile completed for user %s", request.user.username)
             messages.success(request, 'Profile updated successfully.')
             return redirect('home')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.capitalize()}: {error}")
+            logger.warning("Profile completion form is invalid: %s", form.errors)
     else:
         form = ProfileForm(instance=user)
+        logger.info("Rendering profile completion form for user %s", request.user.username)
+
         if user.is_admin:
             form.fields.pop('school')
         else:
@@ -329,12 +342,17 @@ def update_profile_view(request):
         profile_form = ProfileUpdateForm(request.POST, instance=request.user)
         if profile_form.is_valid():
             profile_form.save()
+            logger.info("Profile updated for user %s", request.user.username)
             messages.success(request, 'Your profile has been updated successfully.')
             return redirect('profile')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            for field, errors in profile_form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.capitalize()}: {error}")
+            logger.warning("Profile update form is invalid: %s", profile_form.errors)
     else:
         profile_form = ProfileUpdateForm(instance=request.user)
+        logger.info("Rendering profile update form for user %s", request.user.username)
 
     context = common_context_data(request)
     context.update({
@@ -357,7 +375,9 @@ def billing_information_view(request):
     user = request.user
     try:
         billing_info = BillingInformation.objects.get(user=user)
+        logger.info("Rendering billing information for user %s", user.username)
     except BillingInformation.DoesNotExist:
+        logger.warning("No billing information found for user %s", user.username)
         return redirect('update_billing_info')
 
     context = common_context_data(request)
@@ -384,10 +404,17 @@ def update_billing_information_view(request):
         form = UpdateBillingInformationForm(request.POST, instance=billing_information)
         if form.is_valid():
             form.save()
+            logger.info("Billing information updated for user %s", request.user.username)
             messages.success(request, 'Billing information updated successfully.')
             return redirect('billing_information')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.capitalize()}: {error}")
+            logger.warning("Billing information update form is invalid: %s", form.errors)
     else:
         form = UpdateBillingInformationForm(instance=billing_information)
+        logger.info("Rendering billing information update form for user %s", request.user.username)
 
     context = common_context_data(request)
     context.update({

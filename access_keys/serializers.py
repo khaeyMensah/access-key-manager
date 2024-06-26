@@ -2,9 +2,6 @@ from rest_framework import serializers
 from .models import AccessKey
 
 
-from rest_framework import serializers
-from .models import AccessKey
-
 class AccessKeySerializer(serializers.ModelSerializer):
     """
     Serializer for the AccessKey model.

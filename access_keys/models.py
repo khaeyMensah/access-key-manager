@@ -1,9 +1,11 @@
+import logging
 from django.core.exceptions import ValidationError
 from django.db import models
 from users.models import School, User
 
 
-# Create your models here.
+logger = logging.getLogger(__name__)
+
 def validate_active_key(access_key):
     """
     Validates that a school can have only one active access key at a time.
@@ -21,6 +23,7 @@ def validate_active_key(access_key):
     school = access_key.school
     active_keys = school.access_keys.filter(status='active')
     if active_keys.exists() and access_key.status == 'active':
+        logger.warning(f"School {school.name} already has an active key. Attempt to create another active key.")
         raise ValidationError('A school can have only one active access key at a time.')
 
 

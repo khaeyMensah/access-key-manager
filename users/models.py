@@ -1,6 +1,10 @@
+import logging
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
+
+
+logger = logging.getLogger(__name__)
 
 class User(AbstractUser):
     """
@@ -45,6 +49,7 @@ class User(AbstractUser):
         if self.pk and self.is_profile_complete() and User.objects.filter(pk=self.pk, is_school_personnel=True, school__isnull=False).exists():
             old_school = User.objects.get(pk=self.pk).school
             if old_school != self.school:
+                logger.warning(f"User {self.email} attempted to change school from {old_school} to {self.school}, which is not allowed.")
                 raise ValidationError("School personnel cannot change their school after submitting their profile.")
 
     def is_profile_complete(self):
@@ -114,15 +119,19 @@ class BillingInformation(models.Model):
         """
         if self.payment_method == 'card':
             if not self.card_number or not self.card_expiry or not self.card_cvv:
+                logger.warning(f"User {self.user.email} did not provide complete card details.")
                 raise ValidationError('Card details are required for "Card" payment.')
             if self.mobile_money_number:
+                logger.warning(f"User {self.user.email} provided mobile money number for card payment.")
                 raise ValidationError('Mobile money number should be empty for "Card" payment.')
         elif self.payment_method == 'mtn_momo':
             if not self.mobile_money_number:
+                logger.warning(f"User {self.user.email} did not provide mobile money number for MOMO payment.")
                 raise ValidationError('Mobile money number is required for "MOMO" payment.')
             if self.card_number or self.card_expiry or self.card_cvv:
-                raise ValidationError('Card details should be empty for "MOMO" payment.')
-
+                logger.warning(f"User {self.user.email} provided card details for MOMO payment.")
+                raise ValidationError('Card details should be empty for "MOMO" payment.')    
+            
     def __str__(self):
         return f"{self.user.email} - {self.get_payment_method_display()}"
 

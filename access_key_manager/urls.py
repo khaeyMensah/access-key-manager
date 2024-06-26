@@ -17,9 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('users.urls')),
-    path('access-keys/', include('access_keys.urls', namespace="access_keys")),
-    path('', include('users.urls')),    
+    path('admin/', admin.site.urls),  # Admin site URL
+    path('accounts/', include('users.urls')),  # User-related URLs
+    path('access-keys/', include('access_keys.urls', namespace="access_keys")),  # Access key-related URLs
+    path('', include('users.urls')),  # Root URL, pointing to user-related views
 ]

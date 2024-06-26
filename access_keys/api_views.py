@@ -1,4 +1,5 @@
-from django.contrib.auth.decorators import user_passes_test
+import logging
+from django.contrib.auth.decorators import user_passes_test, login_required
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from users.helpers import is_admin
@@ -6,12 +7,7 @@ from users.models import User
 from .serializers import AccessKeySerializer
 
 
-from django.contrib.auth.decorators import user_passes_test, login_required
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from users.models import User
-from .serializers import AccessKeySerializer
-
+logger = logging.getLogger(__name__)
 
 @login_required
 @user_passes_test(is_admin)
@@ -30,29 +26,31 @@ def check_access_key_status_view(request, email):
     Raises:
         - User.DoesNotExist: If the user with the given email address does not exist.
         - Exception: If an unexpected error occurs.
-
-    Example:
-    ```
-    # Assuming the view is correctly set up and the user is authenticated and has admin privileges
-    response = check_access_key_status_view(request, 'user@example.com')
-    ```
     """
+    logger.info(f"Checking access key status for email: {email}")
+
     if not email:
-        return Response({'error': 'email parameter is required.'}, status=400)
+        logger.error('Email parameter is required.')
+        return Response({'error': 'Email parameter is required.'}, status=400)
 
     try:
         user = User.objects.get(email=email)
         school = user.school
         if not school:
+            logger.warning(f'User with email {email} is not associated with any school.')
             return Response({'error': 'User is not associated with any school.'}, status=404)
 
         active_key = school.access_keys.filter(status='active').first()
         if active_key:
             serializer = AccessKeySerializer(active_key)
+            logger.info(f'Active access key found for email {email}.')
             return Response(serializer.data, status=200)
         else:
+            logger.info(f'No active access key found for email {email}.')
             return Response({'error': 'No active access key found.'}, status=404)
     except User.DoesNotExist:
+        logger.error(f'User with email {email} not found.')
         return Response({'error': 'User not found.'}, status=404)
     except Exception as e:
+        logger.exception(f'Error checking access key status for email {email}: {str(e)}')
         return Response({'error': str(e)}, status=500)

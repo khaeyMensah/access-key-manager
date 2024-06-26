@@ -6,6 +6,7 @@ from users.models import User
 from celery.utils.log import get_task_logger
 import psutil
 
+
 """
 Celery tasks for managing access keys and monitoring worker resources.
 """
@@ -25,7 +26,6 @@ def update_key_statuses():
     now = timezone.now()
     logger.info(f"Running update_key_statuses at {now}")
 
-    # Check and update expired keys
     expired_keys = AccessKey.objects.filter(expiry_date__lte=now, status='active')
     expired_count = expired_keys.count()
     logger.info(f"Found {expired_count} expired keys")
@@ -46,7 +46,6 @@ def update_key_statuses():
             user=system_user
         )
 
-    # Schedule next run based on upcoming expiries
     next_expiry = AccessKey.objects.filter(expiry_date__gt=now, status='active').order_by('expiry_date').first()
 
     if next_expiry:
