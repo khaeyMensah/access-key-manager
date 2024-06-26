@@ -208,7 +208,7 @@ PAYSTACK_SETTINGS = {
     'SECRET_KEY': config('PAYSTACK_SECRET_KEY'),
     'BASE_URL': 'https://api.paystack.co',
     'CURRENCY': 'GHS',
-    'BUTTON_ID': 'paystack-payment-button',  
+    'BUTTON_ID': 'paystack-button',  
     'BUTTON_CLASS': 'btn btn-primary',
     'CALLBACK_URL': config('CALLBACK_URL'),
 }

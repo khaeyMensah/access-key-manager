@@ -148,12 +148,34 @@ class BillingInformationForm(forms.ModelForm):
     """
     email = forms.EmailField(required=True)
     payment_method = forms.ChoiceField(choices=[('', 'Select a payment method')] + BillingInformation.PAYMENT_METHODS, required=True, label='Payment Method')
+    mobile_money_number = forms.CharField(required=False, label='Mobile Money Number')
+    card_number = forms.CharField(required=False, label='Card Number')
     card_expiry = forms.CharField(required=False, label='Card Expiry', widget=forms.TextInput(attrs={'placeholder': 'mm/yy'}))
+    card_cvv = forms.CharField(required=False, label='Card CVV')
     confirm_purchase = forms.BooleanField(required=True, initial=False, label='Confirm purchase')
     
     class Meta:
         model = BillingInformation
         fields = ['email', 'payment_method', 'mobile_money_number', 'card_number', 'card_expiry', 'card_cvv']
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes the form with the provided arguments and sets the initial email value if a user object is provided.
+
+        Parameters:
+        *args: Variable length argument list.
+        **kwargs: Arbitrary keyword arguments.
+
+        Keyword Arguments:
+        user (User): An instance of the User model. If provided, the email field will be initialized with the user's email.
+
+        Returns:
+        None
+        """
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user and 'email' not in self.initial:
+            self.initial['email'] = user.email
 
     def clean_card_expiry(self):
         """
@@ -173,6 +195,25 @@ class BillingInformationForm(forms.ModelForm):
         if card_expiry and not re.match(r'^(0[1-9]|1[0-2])\/\d{2}$', card_expiry):
             raise forms.ValidationError('Card expiry must be in mm/yy format.')
         return card_expiry
+    
+    def clean_mobile_money_number(self):
+        """
+        Validates the mobile money number field and raises a ValidationError if it's empty or not in the correct format.
+
+        Args:
+        self (BillingInformationForm): An instance of the BillingInformationForm class.
+
+        Returns:
+        mobile_money_number (str): The validated mobile money number.
+
+        Raises:
+        ValidationError: If the mobile money number is empty or not in the correct format.
+
+        """
+        mobile_money_number = self.cleaned_data.get('mobile_money_number')
+        if mobile_money_number and not re.match(r'^\d{10}$', mobile_money_number):
+            raise forms.ValidationError('Mobile Money Number must be 10 digits.')
+        return mobile_money_number
 
     def clean(self):
         """
