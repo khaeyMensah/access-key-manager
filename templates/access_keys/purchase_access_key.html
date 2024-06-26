@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+{% load static %}
 {% load crispy_forms_tags %}
 
 {% block content %}
@@ -11,9 +12,9 @@
         <div class="card-body">
           <div class="alert alert-info">
             <p>Fixed price for access key: <strong>GH¢: {{ access_key_price }}</strong></p>
-            <p>Please provide your payment details to Purchase an Access Key</p>
+            <p>Please provide your payment details to purchase an Access Key</p>
           </div>
-          <form method="post" novalidate>
+          <form id="paymentForm" method="post" novalidate>
             {% csrf_token %}
             {{ form.email|as_crispy_field }}
             {{ form.payment_method|as_crispy_field }}
@@ -42,11 +43,12 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'js/purchase_key.js' %}"></script>
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
-  var PAYSTACK_PUBLIC_KEY = "{{ PAYSTACK_SETTINGS.PUBLIC_KEY }}";
-  var USER_EMAIL = "{{ user.email }}";
-  var ACCESS_KEY_PRICE = {{ access_key_price }};
-  var CALLBACK_URL = "{{ PAYSTACK_SETTINGS.CALLBACK_URL }}";
+  const PAYSTACK_PUBLIC_KEY = "{{ PAYSTACK_SETTINGS.PUBLIC_KEY }}";
+  const USER_EMAIL = "{{ user.email }}";
+  const ACCESS_KEY_PRICE = {{ access_key_price }};
+  const CALLBACK_URL = "{{ PAYSTACK_SETTINGS.CALLBACK_URL }}";
 </script>
 {% endblock %}
