@@ -1,8 +1,8 @@
 import logging
-from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from users.helpers import is_admin
+from users.helpers import is_admin, user_passes_test_with_403
 from users.models import User
 from .serializers import AccessKeySerializer
 
@@ -10,7 +10,7 @@ from .serializers import AccessKeySerializer
 logger = logging.getLogger(__name__)
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test_with_403(is_admin)
 @api_view(['GET'])
 def check_access_key_status_view(request, email):
     """
@@ -29,7 +29,7 @@ def check_access_key_status_view(request, email):
     """
     logger.info(f"Checking access key status for email: {email}")
 
-    if not email:
+    if not email or email.lower() == 'none':
         logger.error('Email parameter is required.')
         return Response({'error': 'Email parameter is required.'}, status=400)
 

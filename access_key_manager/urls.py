@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from users import views as users_views 
 
 
 urlpatterns = [
@@ -24,3 +25,5 @@ urlpatterns = [
     path('access-keys/', include('access_keys.urls', namespace="access_keys")),  # Access key-related URLs
     path('', include('users.urls')),  # Root URL, pointing to user-related views
 ]
+
+handler403 = 'users.views.custom_permission_denied'

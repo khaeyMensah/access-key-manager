@@ -1,6 +1,6 @@
 import logging
 from django.conf import settings
-from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 from django.shortcuts import get_object_or_404, render, redirect
@@ -16,15 +16,15 @@ from django.utils.html import strip_tags
 from access_keys.models import AccessKey, KeyLog
 from users.contexts import common_context_data
 from users.forms import BillingInformationForm
-from users.helpers import is_admin, is_school_personnel
+from users.helpers import is_admin, is_school_personnel, user_passes_test_with_403
 from users.models import School, User
 from .utils import generate_access_key
 
 
 logger = logging.getLogger(__name__)
-# Create your views here.
+
 @login_required
-@user_passes_test(is_school_personnel)
+@user_passes_test_with_403(is_school_personnel)
 @permission_required('users.can_purchase_access_key', raise_exception=True)
 def purchase_access_key_view(request):
     """
@@ -115,7 +115,7 @@ def initialize_payment(request):
             'Content-Type': 'application/json',
         }
         data = {
-            'email': billing_info.email,
+            'email': user.email,
             'amount': int(settings.ACCESS_KEY_PRICE * 100),  # Convert from cedis to pesewas
             'currency': 'GHS',
             'callback_url': callback_url,
@@ -233,7 +233,7 @@ def paystack_callback(request):
     return HttpResponse('Payment verification failed', status=400)
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test_with_403(is_admin)
 @permission_required('users.can_revoke_access_key', raise_exception=True)
 def revoke_access_key_view(request, key_id):
     """
