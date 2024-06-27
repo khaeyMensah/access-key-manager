@@ -1,6 +1,6 @@
 import logging
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import login as auth_login, logout
 from users.forms import ProfileUpdateForm, RegistrationForm, LoginForm, ProfileForm, UpdateBillingInformationForm
-from users.helpers import is_school_personnel, is_admin
+from users.helpers import user_passes_test_with_403, is_school_personnel, is_admin
 from users.contexts import common_context_data
 from users.models import BillingInformation, User
 from access_keys.models import AccessKey, KeyLog
@@ -20,7 +20,36 @@ from django.conf import settings
 
 
 logger = logging.getLogger(__name__)
-# Create your views here.
+
+def custom_permission_denied(request, exception):
+    """
+    This function renders a 403 Forbidden page with an error message and additional information.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        exception (Exception): The exception that caused the permission denial.
+
+    Returns:
+        HttpResponse: A rendered HTML response containing the 403 Forbidden page.
+
+    Raises:
+        Exception: If the exception is not an instance of the Http403Forbidden class.
+
+    This function takes an HTTP request object and an exception as input. 
+    It constructs a dictionary containing an error message and additional information. 
+    The error message is either the string representation of the exception or a default message. 
+    The additional information is a string that suggests contacting an administrator if the user 
+    believes the error is not legitimate. The function then renders an HTML response with the 
+    status code 403 (Forbidden) and the constructed context dictionary. If the exception is not 
+    an instance of the Http403Forbidden class, the function raises an exception.
+    """
+    context = {
+        'error_message': str(exception) or 'You do not have permission to access this page.',
+        'additional_info': 'Please contact an administrator if you believe this is an error.'
+    }
+    return render(request, 'errors/403.html', context, status=403)
+
+
 def home(request):
     """
     This function renders the home page for authenticated users.
@@ -37,7 +66,7 @@ def home(request):
 
 
 @login_required
-@user_passes_test(is_school_personnel)
+@user_passes_test_with_403(is_school_personnel)
 def school_dashboard_view(request):
     """
     Renders the school dashboard page for authenticated school personnel.
@@ -71,7 +100,7 @@ def school_dashboard_view(request):
     return render(request, 'users/school_dashboard.html', context)
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test_with_403(is_admin)
 def admin_dashboard_view(request):
     """
     Renders the admin dashboard page for authenticated admin users.
@@ -292,6 +321,7 @@ def complete_profile_view(request):
 
     if user.is_profile_complete():
         messages.info(request, 'Your profile is already complete.')
+        logger.info(f"User {user.username} profile is already complete. Redirecting to profile.")
         return redirect('profile')
 
     if request.method == 'POST':
