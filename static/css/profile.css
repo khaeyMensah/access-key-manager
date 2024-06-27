@@ -1,3 +1,8 @@
+/**
+ * Styles for the user profile page.
+ * Includes layout for profile items and responsiveness.
+ */
+
 #profile {
   display: flex;
   flex-wrap: wrap;

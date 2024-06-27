@@ -1,3 +1,8 @@
+/**
+ * Styles for authentication pages (login, register).
+ * This includes logos, alignment, and card styling.
+ */
+
 .auth-logo h1 a {
   font-family: "Averia Serif Libre", serif;
   font-weight: 700;

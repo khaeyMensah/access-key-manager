@@ -1,4 +1,9 @@
-/* Dark background for table header */
+/**
+ * Styles for tables used in the application.
+ * Includes hover effects, responsive design, and transitions.
+ */
+
+/* Dark background for table headers */
 .table {
   width: 100%;
   border-collapse: collapse;
