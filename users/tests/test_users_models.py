@@ -83,31 +83,31 @@ class BillingInformationTests(TestCase):
     def test_create_billing_information_card(self):
         billing_info = BillingInformation.objects.create(
             user=self.user,
-            payment_method='Card',
+            payment_method='card',
             card_number='1234567890123456',
-            card_expiry='2024-12-31',
+            card_expiry='12/24',
             card_cvv='123'
         )
         self.assertEqual(billing_info.user, self.user)
-        self.assertEqual(billing_info.payment_method, 'Card')
+        self.assertEqual(billing_info.payment_method, 'card')
         self.assertEqual(billing_info.card_number, '1234567890123456')
-        self.assertEqual(billing_info.card_expiry, '2024-12-31')
+        self.assertEqual(billing_info.card_expiry, '12/24')
         self.assertEqual(billing_info.card_cvv, '123')
 
     def test_create_billing_information_momo(self):
         billing_info = BillingInformation.objects.create(
             user=self.user,
-            payment_method='MTN',
+            payment_method='mtn_momo',
             mobile_money_number='0241234567'
         )
         self.assertEqual(billing_info.user, self.user)
-        self.assertEqual(billing_info.payment_method, 'MTN')
+        self.assertEqual(billing_info.payment_method, 'mtn_momo')
         self.assertEqual(billing_info.mobile_money_number, '0241234567')
 
     def test_billing_information_invalid_card(self):
         billing_info = BillingInformation(
             user=self.user,
-            payment_method='Card'
+            payment_method='card'
         )
         with self.assertRaises(ValidationError):
             billing_info.full_clean()
@@ -115,7 +115,7 @@ class BillingInformationTests(TestCase):
     def test_billing_information_invalid_momo(self):
         billing_info = BillingInformation(
             user=self.user,
-            payment_method='MTN'
+            payment_method='mtn_momo'
         )
         with self.assertRaises(ValidationError):
             billing_info.full_clean()
@@ -123,7 +123,7 @@ class BillingInformationTests(TestCase):
     def test_billing_information_str(self):
         billing_info = BillingInformation.objects.create(
             user=self.user,
-            payment_method='MTN',
+            payment_method='mtn_momo',
             mobile_money_number='0241234567'
         )
         self.assertEqual(str(billing_info), 'test@example.com - MTN Mobile Money')

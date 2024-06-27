@@ -8,6 +8,7 @@ from django.utils.encoding import force_bytes
 from users.tokens import account_activation_token
 from access_keys.models import School
 from users.models import BillingInformation, User
+from unittest.mock import patch
 
 User = get_user_model()
 
@@ -155,7 +156,7 @@ class UserViewTests(TestCase):
     def test_billing_information_view(self):
         billing_info = BillingInformation.objects.create(
             user=self.school_personnel_user, 
-            payment_method='Card', 
+            payment_method='card', 
             card_number='1234567890123456', 
             card_expiry=timezone.now().date(), 
             card_cvv='123'
@@ -166,42 +167,74 @@ class UserViewTests(TestCase):
         self.assertTemplateUsed(response, 'users/billing_information.html')
         self.assertContains(response, '**** **** **** 3456')
 
+    @patch('users.models.User.is_profile_complete', return_value=False)
+    def test_complete_profile_view_admin(self, mock_is_profile_complete):
+        self.client.login(username='adminuser', password='password123')
         
-    def test_profile_complete_view(self):
-        self.client.login(username='schooluser', password='password123')
+        # GET request to the complete profile view
         response = self.client.get(reverse('complete_profile'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/complete_profile.html')
 
+        # POST request to update profile
         response = self.client.post(reverse('complete_profile'), {
-            'first_name': 'Updated',
+            'first_name': 'UpdatedAdmin',
             'last_name': 'User',
-            'email': 'updated@example.com',
+            'email': 'updatedadmin@example.com',
+            'staff_id': 'A002',
         })
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('home'))
+        
+        # Refresh the user instance from the database
+        self.admin_user.refresh_from_db()
+        self.assertEqual(self.admin_user.first_name, 'UpdatedAdmin')
+        self.assertEqual(self.admin_user.email, 'updatedadmin@example.com')
+        self.assertEqual(self.admin_user.staff_id, 'A002')
+
+    @patch('users.models.User.is_profile_complete', return_value=False)
+    def test_complete_profile_view_school_personnel(self, mock_is_profile_complete):
+        self.client.login(username='schooluser', password='password123')
+        
+        # GET request to the complete profile view
+        response = self.client.get(reverse('complete_profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/complete_profile.html')
+
+        # POST request to update profile
+        response = self.client.post(reverse('complete_profile'), {
+            'first_name': 'UpdatedSchool',
+            'last_name': 'User',
+            'email': 'updatedschool@example.com',
+            'school': self.school.id,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('home'))
+        
+        # Refresh the user instance from the database
         self.school_personnel_user.refresh_from_db()
-        self.assertEqual(self.school_personnel_user.first_name, 'Updated')
-
-
+        self.assertEqual(self.school_personnel_user.first_name, 'UpdatedSchool')
+        self.assertEqual(self.school_personnel_user.email, 'updatedschool@example.com')
+        self.assertEqual(self.school_personnel_user.school.id, self.school.id)
+        
     def test_update_billing_information_view(self):
         billing_info = BillingInformation.objects.create(
             user=self.school_personnel_user, 
-            payment_method='MTN', 
+            payment_method='mtn_momo', 
             mobile_money_number='1234567890'
         )
         self.client.login(username='schooluser', password='password123')
         response = self.client.post(reverse('update_billing_info'), {
-            'payment_method': 'Card',
+            'payment_method': 'card',
             'card_number': '1234567890123456',
-            'card_expiry': '2023-12-31',
+            'card_expiry': '12/25',
             'card_cvv': '123',
         })
         self.assertEqual(response.status_code, 302)
         billing_info.refresh_from_db()
-        self.assertEqual(billing_info.payment_method, 'Card')
+        self.assertEqual(billing_info.payment_method, 'card')
         self.assertEqual(billing_info.card_number, '1234567890123456')
-        self.assertEqual(billing_info.card_expiry, timezone.datetime(2023, 12, 31).date())
+        self.assertEqual(billing_info.card_expiry, '12/25')
         self.assertEqual(billing_info.card_cvv, '123')
 
             

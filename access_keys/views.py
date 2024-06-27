@@ -1,3 +1,4 @@
+from datetime import timedelta
 import logging
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
@@ -187,7 +188,7 @@ def paystack_callback(request):
 
             # Create access key
             procurement_date = timezone.now()
-            expiry_date = procurement_date + timezone.timedelta(days=1)
+            expiry_date = procurement_date + timedelta(days=1)
             access_key = AccessKey.objects.create(
                 school=school,
                 key=generate_access_key(),
@@ -223,11 +224,8 @@ def paystack_callback(request):
             return redirect('school_dashboard')
 
     except requests.RequestException as e:
-        logger.error(f"Network error during payment verification: {str(e)}")
-        return HttpResponse(f'Network error: {str(e)}', status=500)
-    except Exception as e:
-        logger.error(f"Unexpected error during payment verification: {str(e)}")
-        return HttpResponse(f'An unexpected error occurred: {str(e)}', status=500)
+        logger.error(f"Error verifying payment: {str(e)}")
+        return HttpResponse('Error verifying payment', status=500)
 
     logger.error("Payment verification failed.")
     return HttpResponse('Payment verification failed', status=400)

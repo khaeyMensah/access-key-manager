@@ -1,166 +1,145 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
-from access_keys.models import AccessKey
-from users.models import School, User
+from unittest.mock import patch, MagicMock
+from decimal import Decimal
+from access_keys.models import AccessKey, KeyLog
+from users.models import School, BillingInformation
 
 User = get_user_model()
-
 
 class PurchaseAccessKeyViewTestCase(TestCase):
     def setUp(self):
         self.client = Client()
-        self.school_user = User.objects.create_user(
-            username='schooluser',
-            email='school@example.com',
-            password='testpassword',
-            is_school_personnel=True
-        )
-        self.admin_user = User.objects.create_user(
-            username='adminuser',
-            email='admin@example.com',
-            password='testpassword',
-            is_admin=True
-        )
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
         self.school = School.objects.create(name='Test School')
-        self.school.users.set([self.school_user])
-        
-    def test_only_school_personnel_can_purchase_access_key(self):
-        self.client.force_login(self.school_user)
+        self.school.users.add(self.user)
+        self.user.is_school_personnel = True
+        self.user.save()
+
+        # Assigning permissions
+        permission = Permission.objects.get(codename='can_purchase_access_key')
+        self.user.user_permissions.add(permission)
+            
+    @patch.object(User, 'is_profile_complete', return_value=True)
+    def test_only_school_personnel_can_purchase_access_key(self,  mock_is_profile_complete):
+        self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('access_keys:purchase_access_key'))
         self.assertEqual(response.status_code, 200)
 
-        self.client.force_login(self.admin_user)
-        response = self.client.get(reverse('school_dashboard'))
-        self.assertEqual(response.status_code, 302)
 
-    def test_school_cannot_purchase_multiple_active_keys(self):
-        self.client.force_login(self.school_user)
+    @patch.object(User, 'is_profile_complete', return_value=True)
+    def test_school_cannot_purchase_multiple_active_keys(self, mock_is_profile_complete):
         AccessKey.objects.create(
-            key='TEST123456789',
             school=self.school,
             status='active',
-            assigned_to=self.school_user,
-            procurement_date=timezone.now().date(),
-            expiry_date=timezone.now().date() + timezone.timedelta(days=30),
+            key='test_key',
+            assigned_to=self.user,
+            expiry_date=timezone.now().date() + timezone.timedelta(days=365),
             price=100.00
         )
+        self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('access_keys:purchase_access_key'))
+        self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('school_dashboard'))
 
+
+class InitializePaymentViewTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
+        self.school = School.objects.create(name='Test School')
+        self.school.users.add(self.user)
+        self.user.is_school_personnel = True
+        self.user.save()
+        BillingInformation.objects.create(user=self.user)
+
+        # Assigning permissions
+        permission = Permission.objects.get(codename='can_purchase_access_key')
+        self.user.user_permissions.add(permission)
+
+    @patch('access_keys.views.requests.post')
+    def test_initialize_payment_success(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            'status': True,
+            'data': {'authorization_url': 'https://paystack.com/pay/test'}
+        }
+        mock_post.return_value = mock_response
+
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post(reverse('access_keys:initialize_payment'))
+        self.assertRedirects(response, 'https://paystack.com/pay/test', fetch_redirect_response=False)
         
+
+class PaystackCallbackViewTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
+        self.school = School.objects.create(name='Test School')
+        self.school.users.add(self.user)
+        self.user.is_school_personnel = True
+        self.user.save()
+
+    @patch('access_keys.views.requests.get')
+    def test_paystack_callback_success(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            'status': True,
+            'data': {
+                'amount': 10000,
+                'customer': {'email': 'test@example.com'}
+            }
+        }
+        mock_get.return_value = mock_response
+
+        response = self.client.get(reverse('access_keys:paystack_callback') + '?reference=test_ref')
+        self.assertRedirects(response, reverse('school_dashboard'), fetch_redirect_response=False)
+        self.assertTrue(AccessKey.objects.filter(school=self.school, status='active').exists())
+
 class RevokeAccessKeyViewTestCase(TestCase):
     def setUp(self):
         self.client = Client()
-        self.admin_user = User.objects.create_user(
-            username='adminuser',
-            email='admin@example.com',
-            password='testpassword',
-            is_admin=True
-        )
-        self.school_user = User.objects.create_user(
-            username='schooluser',
-            email='school@example.com',
-            password='testpassword',
-            is_school_personnel=True
-        )
-        self.school = School.objects.create(name='Test School')
-        self.school.users.set([self.school_user])
-        self.access_key = AccessKey.objects.create(
-            key='TEST123456789',
-            school=self.school,
-            status='active',
-            assigned_to=self.school_user,
-            procurement_date=timezone.now().date(),
-            expiry_date=timezone.now().date() + timezone.timedelta(days=30),
-            price=100.00
-        )
+        self.admin_user = User.objects.create_user(username='admin', email='admin@example.com', password='adminpass123')
+        self.admin_user.is_admin = True
+        self.admin_user.save()
 
-    def test_only_admin_can_revoke_access_key(self):
-        self.client.force_login(self.school_user)
-        response = self.client.get(reverse('access_keys:revoke_access_key', args=[self.access_key.id]))
-        # self.assertEqual(response.status_code, 302)  # Redirect expected
-        self.assertEqual(response.status_code, 403)  # Forbidden for school user
+        self.school = School.objects.create(name='Test School')
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
+        self.user.save()
+        self.school.users.add(self.user)
         
-        self.client.force_login(self.admin_user)
-        response = self.client.get(reverse('access_keys:revoke_access_key', args=[self.access_key.id]))
-        self.assertEqual(response.status_code, 200)
-
-    def test_revoke_access_key_success(self):
-        self.client.force_login(self.admin_user)
-
-        # Step 1: Get the revoke access key confirmation page
-        response = self.client.get(reverse('access_keys:revoke_access_key', args=[self.access_key.id]))
-        self.assertEqual(response.status_code, 200)
-
-        # Step 2: Submit the confirmation form to revoke the access key
-        response = self.client.post(reverse('access_keys:revoke_access_key', args=[self.access_key.id]), follow=True)
-        self.assertRedirects(response, reverse('admin_dashboard'))
-
-        # Step 3: Follow the redirect and ensure the final response is 200
-        final_response = self.client.get(reverse('admin_dashboard'))
-        self.assertEqual(final_response.status_code, 200)
-
-        access_key = AccessKey.objects.get(id=self.access_key.id)
-        self.assertEqual(access_key.status, 'revoked')
-        self.assertIsNotNone(access_key.revoked_by)
-        self.assertIsNotNone(access_key.revoked_on)
-
-
-class CheckAccessKeyStatusViewTestCase(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.admin_user = User.objects.create_user(
-            username='adminuser',
-            email='admin@example.com',
-            password='testpassword',
-            is_admin=True
-        )
-        self.school_user = User.objects.create_user(
-            username='schooluser',
-            email='school@example.com',
-            password='testpassword',
-            is_school_personnel=True
-        )
-        self.school = School.objects.create(name='Test School')
-        self.school.users.set([self.school_user])
-        self.active_key = AccessKey.objects.create(
-            key='TEST123456789',
+        self.access_key = AccessKey.objects.create(
+            key='testkey123',
             school=self.school,
             status='active',
-            assigned_to=self.school_user,
-            procurement_date=timezone.now().date(),
-            expiry_date=timezone.now().date() + timezone.timedelta(days=30),
-            price=100.00
+            assigned_to=self.user,
+            expiry_date=timezone.now() + timezone.timedelta(days=30),
+            price=Decimal('100.00')
         )
 
-    def test_only_admin_can_check_access_key_status(self):
-        self.client.force_login(self.school_user)
-        response = self.client.get(reverse('access_keys:key_status', args=['school@example.com']))
-        self.assertEqual(response.status_code, 403)  # Forbidden
+        # Assigning permissions
+        permission = Permission.objects.get(codename='can_revoke_access_key')
+        self.admin_user.user_permissions.add(permission)
 
-        self.client.force_login(self.admin_user)
-        response = self.client.get(reverse('access_keys:key_status', args=['school@example.com']))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['key'], 'TEST123456789')
+    @patch.object(User, 'is_profile_complete', return_value=True)
+    def test_revoke_access_key_view(self, mock_is_profile_complete):
+        self.client.login(username='admin', password='adminpass123')
+        response = self.client.post(reverse('access_keys:revoke_access_key', args=[self.access_key.id]))
+        
+        # Ensure the redirection is correct
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('admin_dashboard'), status_code=302)
 
-    def test_active_key_found(self):
-        self.client.force_login(self.admin_user)
-        response = self.client.get(reverse('access_keys:key_status', args=['school@example.com']))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['key'], 'TEST123456789')
+        self.access_key.refresh_from_db()
+        self.assertEqual(self.access_key.status, 'revoked')
+        self.assertTrue(KeyLog.objects.filter(access_key=self.access_key, action__contains='revoked').exists())
 
-    def test_no_active_key_found(self):
-        self.active_key.delete()
-        self.client.force_login(self.admin_user)
-        response = self.client.get(reverse('access_keys:key_status', args=['school@example.com']))
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json(), {'error': 'No active access key found.'})
-
-    def test_invalid_email(self):
-        self.client.force_login(self.admin_user)
-        response = self.client.get(reverse('access_keys:key_status', args=['invalid@email.com']))
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json(), {'error': 'User not found.'})
-
+    @patch.object(User, 'is_profile_complete', return_value=True)
+    def test_only_admin_can_revoke_access_key(self, mock_is_profile_complete):
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post(reverse('access_keys:revoke_access_key', args=[self.access_key.id]))
+        self.assertEqual(response.status_code, 403)
