@@ -38,8 +38,8 @@
               <td>{{ access_key.key }}</td>
               <td>{{ access_key.school.name }}</td>
               <td>{{ access_key.get_status_display }}</td>
-              <td>{{ access_key.procurement_date }}</td>
-              <td>{{ access_key.expiry_date }}</td>
+              <td>{{ access_key.procurement_date|date:"F j, Y" }}</td>
+              <td>{{ access_key.expiry_date|date:"F j, Y" }}</td>
               <td>
                 {% if access_key.status == 'active' %}
                   <a href="{% url 'access_keys:revoke_access_key' access_key.id %}" class='btn btn-primary'>Revoke</a>
