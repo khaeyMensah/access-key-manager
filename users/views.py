@@ -32,16 +32,8 @@ def custom_permission_denied(request, exception):
     Returns:
         HttpResponse: A rendered HTML response containing the 403 Forbidden page.
 
-    Raises:
-        Exception: If the exception is not an instance of the Http403Forbidden class.
-
-    This function takes an HTTP request object and an exception as input. 
-    It constructs a dictionary containing an error message and additional information. 
-    The error message is either the string representation of the exception or a default message. 
-    The additional information is a string that suggests contacting an administrator if the user 
-    believes the error is not legitimate. The function then renders an HTML response with the 
-    status code 403 (Forbidden) and the constructed context dictionary. If the exception is not 
-    an instance of the Http403Forbidden class, the function raises an exception.
+     Returns:
+        HttpResponse: A rendered HTML response with a 403 Forbidden status.
     """
     context = {
         'error_message': str(exception) or 'You do not have permission to access this page.',
