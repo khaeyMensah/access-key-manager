@@ -7,8 +7,8 @@
     <strong>Key:</strong> {{ access_key.key }} <br>
     <strong>School:</strong> {{ access_key.school.name }} <br>
     <strong>Status:</strong> {{ access_key.status }} <br>
-    <strong>Procurement Date:</strong> {{ access_key.procurement_date }} <br>
-    <strong>Expiry Date:</strong> {{ access_key.expiry_date }} <br>
+    <strong>Procurement Date:</strong> {{ access_key.procurement_date|date:"F j, Y" }} <br>
+    <strong>Expiry Date:</strong> {{ access_key.expiry_date|date:"F j, Y" }} <br>
   </p>
   <form method="post">
     {% csrf_token %}
