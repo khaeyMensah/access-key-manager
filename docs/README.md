@@ -121,8 +121,9 @@ Our project consists of the following main Django apps:
 
    ```plaintext
    SECRET_KEY = your_secret_key
-   DEBUG = True
+   DEBUG = False
    ALLOWED_HOSTS = localhost, 127.0.0.1
+   DATABASE_URL = your_database_url
    CSRF_TRUSTED_ORIGINS = http://localhost, http://127.0.0.1, https://your-deployed-url
    EMAIL_BACKEND = django.core.mail.backends.smtp.EmailBackend
    EMAIL_HOST = smtp.gmail.com
