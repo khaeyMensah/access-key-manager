@@ -103,8 +103,7 @@
                             <p><small>Total Schools Registered</small></p>
                         {% endif %}
                     {% else %}
-                        <h6>Welcome to Access Key Manager</h6>
-                        <p><small>Please log in or register to manage your school's access keys.</small></p>
+                        <h6>--</h6>
                     {% endif %}
                 </div>
             
@@ -115,7 +114,7 @@
                             <p><small>Total Active Keys</small></p>
                         {% elif request.user.is_school_personnel %}
                             {% if active_key %}
-                                <h3>{{ active_key.expiry_date }}</h3>
+                                <h3>{{ active_key.expiry_date|date:"F j, Y" }}</h3>
                             {% else %}
                                 <h4>No Active Key</h4>
                             {% endif %}
@@ -125,8 +124,7 @@
                             <p><small>Total Active Keys</small></p>
                         {% endif %}
                     {% else %}
-                        <h6>About Access Key Manager</h6>
-                        <p><small>Manage your school's access keys efficiently and securely. Log in to get started.</small></p>
+                        <h6>--</h6>
                     {% endif %}
                 </div>
             
@@ -143,8 +141,7 @@
                             <p><small>Total Keys Purchased</small></p>
                         {% endif %}
                     {% else %}
-                        <h6>Get Started</h6>
-                        <p><small>To use Access Key Manager, log in or register. You can view and manage your access keys once logged in.</small></p>
+                        <h6>--</h6>
                     {% endif %}
                 </div>
             </div>
@@ -154,9 +151,6 @@
             <!-- Main content -->
             <div class="container col-12 col-lg-9" id="main-content">
                 {% block content %}{% endblock %}
-            </div>
-            <div class="container col-12 col-lg-12" id="home-content">
-                {% block home_content %}{% endblock %}
             </div>
         </div>
     </div>

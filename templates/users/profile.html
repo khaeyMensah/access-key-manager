@@ -40,8 +40,8 @@
                 {% if active_key %}
                     <p><strong>Key:</strong> {{ active_key.key }}</p>
                     <p><strong>Status:</strong> {{ active_key.status }}</p>
-                    <p><strong>Procurement Date:</strong> {{ active_key.procurement_date }}</p>
-                    <p><strong>Expiry Date:</strong> {{ active_key.expiry_date }}</p>
+                    <p><strong>Procurement Date:</strong> {{ active_key.procurement_date|date:"F j, Y" }}</p>
+                    <p><strong>Expiry Date:</strong> {{ active_key.expiry_date|date:"F j, Y" }}</p>
                     {% else %}
                         <p>No active access key found.</p>
                     {% endif %}
