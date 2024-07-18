@@ -24,22 +24,6 @@ app.conf.beat_schedule = {
     },
 }
 
-
-
-# app.conf.beat_schedule = {
-#     'update_key_statuses': {
-#         'task': 'access_keys.tasks.update_key_statuses',
-#         'schedule': schedule(run_every=timedelta(hours=1)),
-#         'options': {'expires': 1000}
-#     },
-    # 'monitor_memory': {
-    #     'task': 'access_keys.tasks.monitor_memory',
-    #     'schedule': schedule(run_every=timedelta(hours=1)),
-    #     'options': {'expires': 1000}
-    # },
-# }
-
-
 @app.task(bind=True)
 def debug_task(self):
     print('Request: {0!r}'.format(self.request))
