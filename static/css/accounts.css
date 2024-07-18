@@ -3,7 +3,7 @@
  * This includes logos, alignment, and card styling.
  */
 
-.auth-logo h1 a {
+.auth-logo h4 a {
   font-family: "Averia Serif Libre", serif; /* Custom font for the authentication logo */
   font-weight: 700;
   text-decoration: none;
@@ -15,14 +15,18 @@ a {
 }
 
 .app-logo {
+  display: flex;
   width: 100px;
   margin: auto;
+  /* background-color: red; */
+  justify-content: center;
 }
 
 .app-logo img {
-  width: 100%;
+  width: 60%;
   border-radius: 50%;
-  margin: 50px 0 30px 0;
+  margin-top: 80px;
+  margin-bottom: 30px;
 }
 
 /* Center align the login page elements */
