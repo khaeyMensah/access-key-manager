@@ -45,19 +45,22 @@ def update_key_statuses():
             action=f'Access key {key.key} expired for school {key.school.name}',
             user=system_user
         )
+        logger.info(f"Updated key {key.key} to expired.")
+    logger.info(f'Checked at {timezone.now()}: Updated {expired_keys.count()} keys.')
+        
 
-    next_expiry = AccessKey.objects.filter(expiry_date__gt=now, status='active').order_by('expiry_date').first()
+    # next_expiry = AccessKey.objects.filter(expiry_date__gt=now, status='active').order_by('expiry_date').first()
 
-    if next_expiry:
-        next_run = next_expiry.expiry_date
-        logger.info(f"Scheduling next run at {next_run}")
-        update_key_statuses.apply_async(eta=next_run)
-    else:
-        next_run = now + timedelta(hours=1)
-        logger.info("No upcoming expiries. Next check will be in 1 hour.")
-        update_key_statuses.apply_async(eta=next_run)
+    # if next_expiry:
+    #     next_run = next_expiry.expiry_date
+    #     logger.info(f"Scheduling next run at {next_run}")
+    #     update_key_statuses.apply_async(eta=next_run)
+    # else:
+    #     next_run = now + timedelta(hours=1)
+    #     logger.info("No upcoming expiries. Next check will be in 1 hour.")
+    #     update_key_statuses.apply_async(eta=next_run)
 
-    return f"Update completed. Expired {expired_count} keys."
+    # return f"Update completed. Expired {expired_count} keys."
 
 # @shared_task
 # def monitor_memory():
