@@ -59,18 +59,18 @@ def update_key_statuses():
 
     return f"Update completed. Expired {expired_count} keys."
 
-@shared_task
-def monitor_memory():
-    """
-    Monitor the memory and CPU usage of the Celery worker.
+# @shared_task
+# def monitor_memory():
+#     """
+#     Monitor the memory and CPU usage of the Celery worker.
 
-    This task uses the psutil library to retrieve the memory and CPU usage of the Celery worker process and logs the information.
+#     This task uses the psutil library to retrieve the memory and CPU usage of the Celery worker process and logs the information.
 
-    Returns:
-        None
-    """
-    process = psutil.Process()
-    memory_info = process.memory_info()
-    cpu_usage = process.cpu_percent(interval=1)
-    logger.info(f"Celery worker memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
-    logger.info(f"Celery worker CPU usage: {cpu_usage:.2f}%")
+#     Returns:
+#         None
+#     """
+#     process = psutil.Process()
+#     memory_info = process.memory_info()
+#     cpu_usage = process.cpu_percent(interval=1)
+#     logger.info(f"Celery worker memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
+#     logger.info(f"Celery worker CPU usage: {cpu_usage:.2f}%")
